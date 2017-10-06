@@ -1,0 +1,208 @@
+==============DEADLINES==============
+Deadlines for MPhys projects of 2017-2018 academic year :
+
+
+Progress Report:					(Check progress report doc file)
+	-Tuesday 9th  January 2018    	(EXAM SEASON AROUND THIS TIME)
+	An earlier deadline may be preferable and possible since it is mearly a progress report.
+		Your progress report should describe:
+
+			* the background necessary to put the project in context
+			* the aims and objectives of the project
+			* the methods chosen to achieve those aims
+			* the progress that has been made to date
+			* what remains to be done and how it is intended to complete the project on time
+
+	
+	
+Submission of Final Report and Project Summary Report: 
+	-Thursday 19th April 2018 
+Interviews: 
+	-During the weeks beginning 23rd April, and 30th April 2018
+=====================================
+
+
+
+============General Coding============
+
+The prerequisites outlined below cover such matters as:
+
+    -how is development structured? (life cycle)
+    -what is the software meant to do? (requirements)
+    -the overall structure of the software system (architecture)
+    -more detailed design of individual components (design)
+    -choice of programming language(s)
+		Python 2.7
+
+
+Python Code Layout
+From: https://www.python.org/dev/peps/pep-0008/#introduction
+      https://www.python.org/dev/peps/pep-0020/			<-- memes
+
+Indentation:
+	-Use 4 spaces per indentation level.
+	-Spaces are the preferred indentation method.
+
+Blank Lines:
+	-Surround top-level function and class definitions with two blank lines.
+	
+Comments:
+	-Comments that contradict the code are worse than no comments.
+	-Always make a priority of keeping the comments up-to-date when the code changes!
+	
+Naming Conventions:
+	-b (single lowercase letter)		(Counters and other such variables)
+	-B (single uppercase letter)		(Counters and other such variables)
+	-lowercase							(module names?) 
+	-lower_case_with_underscores		(module names?) 
+	-UPPERCASE							(Physical Constants? Global Variables?) eg. Viscocity? or Gravitational constant?
+	-UPPER_CASE_WITH_UNDERSCORES		(Physical Constants)
+	
+	-Never use the characters 'l' (lowercase letter el), 'O' (uppercase letter oh), or 'I' (uppercase letter eye) as single character variable names.
+	-Modules should have short, all-lowercase names. Underscores can be used in the module name if it improves readability.
+
+General Concepts:
+	-One statement per line
+	-when using if statements, you don't need to check if it's true eg:
+				# Just check the value
+				if attr:
+					print 'attr is truthy!'
+
+				# or check for the opposite
+				if not attr:
+					print 'attr is falsey!'
+					
+					
+	
+Modular based code using subroutines/functions is preferred for versatillity and cleanliness
+======================================
+	
+
+============General Physics============
+"explain the spectral-timing properties of the X-ray variability"
+
+
+"Most of the variability power is in the form of aperiodic fluctuations
+that span several orders of magnitude in temporal frequency"
+
+"3 - 80M_sol black holes are created through the collapse of Massive stars" (Well established)
+
+Supermassive black holes 10^6 - 10^9 however are not so established
+
+They may form through the merger of ~10^2 –
+10^5 M? IMBHs (Ebisuzaki et al. 2001). IMBHs
+are thus a crucial missing link between stellar-
+mass and supermassive BHs, with likely environ-
+ments for their formation including globular clus-
+ters
+
+--> circular vs elliptical disks?
+
+
+Angular momentum revision needed.
+	-Mass has more angular momentum when it is further from the center? L = r x parameter
+	-
+
+CreateDisk( Variables )
+Built in variables for main sequence star (different masses), white dwarfs, neutron stars, stellar mass black holes, supermassive black holes. 
+What is different except mass?  --> composition?
+
+Mass of Accretor Function
+
+"An accretion disc with an "slpha" parameter fluctuating at different is considered." - 
+
+
+http://qxyang.lamost.org/uploads/books/Accretion_Power_in_Astrophysics.pdf
+
+
+
+--> Save state at each time interval so one can revert back and create a new evolution from a pre existing state?
+
+
+
+
+---------------------------
+Simple Maths:
+
+A body of mass M and Radius R the gravitational potential Energy released by the accretion of mass m is
+
+\Delta E_{acc} = \frac{GMm}{R}
+----------------------------
+
+
+
+
+============Knigge Email============
+• Decide on the physical system we're modelling 
+	o Accretor type 
+		? main sequence star 
+		? white dwarf 
+		? neutron star
+		? stellar mass black hole 
+		? supermassive black hole 
+	o Based on accretor type (and system), decide on 
+		? Mass of accretor 
+		? Radius of accretor = inner radius of accretion disk 
+		? Outer radius of accretion disk 
+		? Average accretion rate through the disk
+• Set up a model disk consisting of N annuli 
+	o the spacing/size of the annuli is important! 
+	o as a starting point, use spacing/size constant in log(R) 
+		? i.e. constant *ratio* -- R_i+1/R_i = constant 
+• Work out the effective temperature at each radius according to standard thin disk theory 
+	o T_eff(R) ~ R^{-3/4}    (at R >> R_in) 
+• Work out the disk spectrum by integrating over the disk 
+	o Assume blackbody radiation: B_nu(T_eff) 
+• Work out the viscous time-scale at each disk radius 
+• Generate local Mdot fluctuations at each radius 
+	o As a starting point, assume mdot(r_j,t) is a sinusoid with period equal to the viscous time-scale 
+	o Code things with a view to making this more general/complex in future 
+• Work out the overall Mdot fluctuation at each radius 
+	o Eq 1 in Arevalo & Uttley 
+• Work out the resulting light curves 
+	o bolometric: L(r_j,t) ~ Mdot(r_j,t) 
+	o monochromatic: based on BB spectrum 
+• Plot the light curves 
+• Create and inspect power spectra 
+• Plot rms vs flux 
+
+Arevalo (Section 2.2 in particular):
+http://cdsads.u-strasbg.fr/abs/2006MNRAS.367..801A
+
+Book: Frank, King & Raine "Accretion Power in Astrophysics"
+Chapters 1, 4.5 - 4.8, 5
+http://qxyang.lamost.org/uploads/books/Accretion_Power_in_Astrophysics.pdf
+
+Lyubarskii:
+http://cdsads.u-strasbg.fr/abs/1997MNRAS.292..679L
+Pringle:
+http://adsabs.harvard.edu/abs/1981ARA%26A..19..137P
+Kotov -- Section 4:
+http://cdsads.u-strasbg.fr/abs/2001MNRAS.327..799K
+======================================
+
+============Knigge Questions============
+
+any prefered format?
+why in New zealand?
+
+"the country -- in New Zealand -- between mid-January and end of April of next year."
+
+propose times
+NZ is +13
+UK is +1
+12 hours difference between
+
+9am UK = 9pm NZ		(SAME DAY)
+10pm AUS = 10am UK 	(SAME DAY)
+
+29th October 2017 
+
+
+
+
+any paticular journal/citation style?
+
+Is putting the project publicly available on GitHub a bad idea?
+Can we add you to the GitHub?
+========================================

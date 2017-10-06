@@ -1,0 +1,29 @@
+@ARTICLE{2006MNRAS.367..801A,
+   author = {{Ar{\'e}valo}, P. and {Uttley}, P.},
+    title = "{Investigating a fluctuating-accretion model for the spectral-timing properties of accreting black hole systems}",
+  journal = {\mnras},
+   eprint = {astro-ph/0512394},
+ keywords = {accretion, accretion discs, galaxies: active},
+     year = 2006,
+    month = apr,
+   volume = 367,
+    pages = {801-814},
+      doi = {10.1111/j.1365-2966.2006.09989.x},
+   adsurl = {http://cdsads.u-strasbg.fr/abs/2006MNRAS.367..801A},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
+
+
+@ARTICLE{1997MNRAS.292..679L,
+   author = {{Lyubarskii}, Y.~E.},
+    title = "{Flicker noise in accretion discs}",
+  journal = {\mnras},
+ keywords = {Accretion Disks, Noise Measurement, Mass Transfer, Luminosity, X Ray Sources, Computational Astrophysics, Radial Distribution},
+     year = 1997,
+    month = dec,
+   volume = 292,
+    pages = {679},
+      doi = {10.1093/mnras/292.3.679},
+   adsurl = {http://cdsads.u-strasbg.fr/abs/1997MNRAS.292..679L},
+  adsnote = {Provided by the SAO/NASA Astrophysics Data System}
+}
