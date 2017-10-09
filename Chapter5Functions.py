@@ -3,7 +3,7 @@ MASS = 50        #Mass of accreting star
 
 
 def AngularVelocity(R):
-    angVel = ((GRAVITATION * MASS)/R^4)**0.5
+    angVel = ((GRAVITATION * MASS)/R^3)**0.5
     return angVel
     
 def circularVelocity(R):

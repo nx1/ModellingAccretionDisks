@@ -78,6 +78,7 @@ Modular based code using subroutines/functions is preferred for versatillity and
 ======================================
 	
 
+
 ============General Physics============
 "explain the spectral-timing properties of the X-ray variability"
 
@@ -117,7 +118,7 @@ http://qxyang.lamost.org/uploads/books/Accretion_Power_in_Astrophysics.pdf
 
 
 --> Save state at each time interval so one can revert back and create a new evolution from a pre existing state?
-
+=======================================
 
 
 
