@@ -71,6 +71,10 @@ General Concepts:
 				# or check for the opposite
 				if not attr:
 					print 'attr is falsey!'
+                    
+
+Specific things:
+    USE NUMPY ARRAYS INSTEAD OF PYTHON LISTS.
 					
 					
 	
@@ -97,14 +101,14 @@ mass and supermassive BHs, with likely environ-
 ments for their formation including globular clus-
 ters
 
---> circular vs elliptical disks?
+--> circular vs elliptical discs?
 
 
 Angular momentum revision needed.
 	-Mass has more angular momentum when it is further from the center? L = r x parameter
 	-
 
-CreateDisk( Variables )
+CreateDisc( Variables )
 Built in variables for main sequence star (different masses), white dwarfs, neutron stars, stellar mass black holes, supermassive black holes. 
 What is different except mass?  --> composition?
 
@@ -128,6 +132,9 @@ Simple Maths:
 A body of mass M and Radius R the gravitational potential Energy released by the accretion of mass m is
 
 \Delta E_{acc} = \frac{GMm}{R}
+
+
+at a given radius, the rest of the disc is obtained by inegrating over 2*pi*r
 ----------------------------
 
 
@@ -143,7 +150,7 @@ A body of mass M and Radius R the gravitational potential Energy released by the
 		? supermassive black hole 
 	o Based on accretor type (and system), decide on 
 		? Mass of accretor 
-		? Radius of accretor = inner radius of accretion disk 
+		? Radius of accretor = inner radius of accretion disk
 		? Outer radius of accretion disk 
 		? Average accretion rate through the disk
 • Set up a model disk consisting of N annuli 

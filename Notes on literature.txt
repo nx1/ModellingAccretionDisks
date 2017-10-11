@@ -1,0 +1,33 @@
+
+Accretion Power in Astrophysics:
+Chapter 1:
+    1.1
+    Each accretor type has different timeframes assocated with the processes 
+    within in based usually on mass.
+    
+    1.2
+    Eddington Limit is the maximum luminosity f accretion, it arises as a result
+    of force balance.
+    
+    1.3
+    We can treat the the spectrum of an acreting object as a being emitted like
+    a blackbody. This can be linked to it's luminosity. (eq 1.10)
+
+    We may also define a temperature that the accreted material would reach if 
+    all of it's GPE was converted into thermal energy.
+    
+    white dwarfs should be optical,ultra violet and possibly Xray sources.
+    
+Chapter 2:
+    2.1
+    Accreting matter is gaseous and only interacts via collisions.
+    
+CHAPTER 5:
+    5.1
+    The thin disk approximation can be made
+    
+    Much of the present interest in accretion discs stems from the encouraging
+    results of comparison between this theory and observations of close binary systems.
+    
+    5.2
+    Cylindrical polar coords
