@@ -18,13 +18,13 @@ def create_disc (N,const,Rmax,rstart):
 
 def create_polar (R):
     R_new = []
-    Theta =  np.repeat(np.linspace(0, 2*np.pi, 100), len(R))
-    Theta = len(R) * Theta
+    Theta =  np.tile(np.linspace(0, 2*np.pi, 100), len(R))
     print(len(R))
     for i in range(len(R)):
         
         for j in range(100):
             R_new.append(R[i])
+          
         
     
     return R_new, Theta
@@ -35,12 +35,14 @@ def create_polar (R):
 
 
 
-r = create_disc(3,2.0,8.0,1.0)
+r = create_disc(5,2.0,8.0,1.0)
 r_new, theta = create_polar(r)
 
 
 ax = plt.subplot(111, projection='polar')
+
 ax.plot(theta, r_new)
+
 #ax.set_rmax(max(r))
 ax.set_rticks([0.5, 1, 1.5, 2])  # less radial ticks
 ax.set_rlabel_position(-22.5)  # get radial labels away from plotted line
