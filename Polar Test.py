@@ -5,6 +5,18 @@ import matplotlib.pyplot as plt
 
 
 def create_disc (N,const,Rmax,rstart):
+    
+    '''
+    Creates a basic disc with constant ratio between radii
+    Returns a numpy array.
+    
+    inputs:
+        N       = Number of Annuli
+        const   = Constant ratio between consecutive radii
+        Rmax    = Max Radius (CURRENTLY UNUSED)
+        rstart  = Radii of innermost disc
+    '''
+    
     R = []
     for i in range(N):
         if i==0:
@@ -13,8 +25,6 @@ def create_disc (N,const,Rmax,rstart):
             R.append(R[i-1]*const)
             
     return np.asarray(R)    #Converts python list to numpy array
-
-
 
 def create_polar (R):
     R_new = []
@@ -30,9 +40,10 @@ def create_polar (R):
     return R_new, Theta
 
 
+#Local small accretion rate fluctuations function
 
-
-
+def M_dot (R_i, t):
+    a=np.random.standard_cauchy
 
 
 r = create_disc(5,2.0,8.0,1.0)
