@@ -53,6 +53,7 @@ def M_dot(R, t):
     
     for i in range(len(R)):
         m_dot_local.append(np.random.uniform(0.0,0.1))
+        #m_dot_local is <<1
         M_dot_local.append(np.random.standard_cauchy())
         M_dot.append( M_dot_local[i] * (1 + m_dot_local[i]) )
         
