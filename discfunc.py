@@ -41,12 +41,21 @@ def M_dot(R, t, M_0_Start):
     '''
     
     print('INPUTS:', R)
+<<<<<<< HEAD
     M_dot = np.empty(len(R))
     m_dot_local = np.empty(len(R))
     M_dot_local = np.empty(len(R))
     M_dot_local[len(R)-1]=M_0_Start
     print m_dot_local
     
+=======
+    M_dot = [None] * len(R)
+    m_dot_local = [None] * len(R)
+    M_dot_local = [None] * len(R)
+    M_dot_local[len(R)-1] = M_0_Start
+                
+    print(M_dot_local)
+>>>>>>> 4fe0c8918897c1d8c06ef3e5f3af5c246ef78696
     for i in range(len(R)):
         np.append(m_dot_local,np.random.uniform(0.0,0.1))
         #m_dot_local is <<1
