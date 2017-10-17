@@ -41,14 +41,17 @@ def M_dot(R, t, M_0_Start):
     '''
     
     print('INPUTS:', R)
-    M_dot = np.zeros(len(R))
-    m_dot_local = np.zeros(len(R))
-    M_dot_local = np.zeros(len(R))
+    M_dot = np.empty(len(R))
+    m_dot_local = np.empty(len(R))
+    M_dot_local = np.empty(len(R))
     M_dot_local[len(R)-1]=M_0_Start
-    print(M_dot_local)
+    print m_dot_local
+    
     for i in range(len(R)):
-        m_dot_local.append(np.random.uniform(0.0,0.1))
+        np.append(m_dot_local,np.random.uniform(0.0,0.1))
         #m_dot_local is <<1
+        print ("mdot",m_dot_local)
+        """
         M_dot_local.append(np.random.standard_cauchy())
         M_dot.append( M_dot_local[i] * (1 + m_dot_local[i]) )
         
@@ -60,7 +63,7 @@ def M_dot(R, t, M_0_Start):
         
     return M_dot
     
-    
+  """  
 def calc_alpha (R):
     alpha=[]
     for i in range(len(R)):
@@ -114,7 +117,6 @@ H_R_=0.01 # H/R (height of the disc over total radius)
 #================================================#
 R = create_disc(5,3,10,2) 
 alpha = calc_alpha(R)
-
 
 print('alphas:', alpha)
 print('visc_freq', viscous_frequency(R)) 
