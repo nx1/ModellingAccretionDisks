@@ -56,23 +56,9 @@ def M_dot(R,M_0_start):
     
     for i in range(len(R)):
         m_temp = 1 #Variable for storing 1 + mdot sum
-        
-        print('=================')
-        print 'i =', i, '/', len(R)-1
-        
         for j in range(i+1):
-            print '-----------'
-            print 'j = ', j, '/' , i
-            print 'mdot', m_dot[-(1+j)]
-            
             m_temp = m_temp * (1 + m_dot[-(1+j)])
-            
-            print 'm_temp = ', m_temp
-            print '2+i = ', 2+i
-            print 'len(R) = ', len(R)
-        
-    
-        print('@@@@@@@@@@')
+
         M_dot[-(1+i)] = M_dot_local[-(1+i)] * m_temp
              
         if (2+i) < len(R)+1:
@@ -142,7 +128,7 @@ print('visc_time', viscous_timescale(R))
 
 print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
                 
-M_dot(R, M_0_start)    
+print M_dot(R, M_0_start)    
 
 print('------')
 
