@@ -121,16 +121,12 @@ M_0_start = 100
 R = create_disc(5,3,10,2) 
 alpha = calc_alpha(R)
 
-print('alphas:', alpha)
-print('visc_freq', viscous_frequency(R)) 
-print('visc_vel', viscous_velocity(R))
-print('visc_time', viscous_timescale(R))
+print 'alphas:', alpha
+print 'visc_freq:', viscous_frequency(R)
+print 'visc_vel:', viscous_velocity(R)
+print 'visc_time:', viscous_timescale(R)
+print 'M_dot:', M_dot(R, M_0_start)
 
-print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-                
-print M_dot(R, M_0_start)    
-
-print('------')
 
 
 
