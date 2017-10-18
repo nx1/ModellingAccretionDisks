@@ -148,6 +148,7 @@ M_0_start = 100
 #================================================#
 
 R = create_disc(5,3,10,2) 
+alpha = calc_alpha(R)
 
 print 'alphas:', calc_alpha(R)
 print 'visc_freq:', viscous_frequency(R)
