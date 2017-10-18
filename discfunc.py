@@ -1,6 +1,24 @@
 # -*- coding: utf-8 -*-
+
+"""
+discfunc.py
+
+Created on Mon Oct  9 16:18:50 2017
+
+Authors: Vysakh Salil, Norman Khan
+
+Contains the main functions used for the accretion disk model 
+Heavily based on the model proposed by P Arevalo P Uttley 2005
+Can easily be imported by using:
+    
+    import discfunc as df
+"""
+#Imports
 import numpy as np
 
+#================================================#
+#====================FUNCTIONS===================#
+#================================================#
 def create_disc (N,const,Rmax,rstart):
     
     '''
@@ -79,6 +97,9 @@ def viscous_frequency(R):
     Calculates the viscous frequency at a given radius
     based off the model by p.arevalo and p.uttley
     
+    inputs:
+        R         = Array of the radii
+        M_0_start = Starting outer radius mass accretion rate
     '''
     f_visc=[]
     for i in range(len(R)):
@@ -91,6 +112,9 @@ def viscous_velocity(R):
     Calculates the viscous velocity at a given radius
     based off the model by p.arevalo and p.uttley
     
+    inputs:
+        R    = Array of the radii
+        H_R_ = Starting outer radius mass accretion rate
     '''
     vel_visc=[]
     for i in range(len(R)):
@@ -111,6 +135,8 @@ def viscous_timescale (R):
         
 
 #================================================#
+#====================CONSTANTS===================#
+#================================================#
 
 
 H_R_=0.01 # H/R (height of the disc over total radius)
@@ -118,10 +144,12 @@ M_0_start = 100
 
 
 #================================================#
-R = create_disc(5,3,10,2) 
-alpha = calc_alpha(R)
+#=======================MAIN=====================#
+#================================================#
 
-print 'alphas:', alpha
+R = create_disc(5,3,10,2) 
+
+print 'alphas:', calc_alpha(R)
 print 'visc_freq:', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
 print 'visc_time:', viscous_timescale(R)
