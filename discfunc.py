@@ -146,11 +146,16 @@ M_0_start = 100
 #================================================#
 #=======================MAIN=====================#
 #================================================#
+'''Alphas are currently created once as a global variable 
+due to random number generation'''
+global alpha 
 
 R = create_disc(5,3,10,2) 
-alpha = calc_alpha(R)
+alpha = calc_alpha(R)   
 
-print 'alphas:', calc_alpha(R)
+
+
+print 'alphas:', alpha
 print 'visc_freq:', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
 print 'visc_time:', viscous_timescale(R)
