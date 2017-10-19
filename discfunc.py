@@ -15,6 +15,7 @@ Can easily be imported by using:
 """
 #Imports
 import numpy as np
+import matplotlib.pyplot as plt
 
 #================================================#
 #====================FUNCTIONS===================#
@@ -68,7 +69,7 @@ def M_dot(R,M_0_start):
     #Creating Arrays to store values of M(r), M_0(r) and m(r)
     M_dot_local = [0]*len(R)
     M_dot_local[len(R)-1] = M_0_start
-    m_dot = [np.random.uniform(0.0,0.1) for i in range(len(R))]
+    m_dot = [np.random.uniform(0.0,0.01) for i in range(len(R))]
     M_dot = [0]*len(R)
     
     
@@ -132,6 +133,16 @@ def viscous_timescale (R):
     for i in range (len(R)):
         time_visc.append(R[i]/vel_visc[i])
     return time_visc
+
+def emissivity (R):
+    '''
+    calculates emissivity, which describes the totsl energy loss
+    '''
+    gamma=3
+    em=[]
+    for i in range(len(R)):
+        em.append((R[i]**-gamma)*((R[0]/R[i])**0.5))
+    return em
         
 
 #================================================#
@@ -140,7 +151,7 @@ def viscous_timescale (R):
 
 
 H_R_=0.01 # H/R (height of the disc over total radius)
-M_0_start = 100
+M_0_start = 5
 
 
 #================================================#
@@ -153,6 +164,15 @@ global alpha
 R = create_disc(5,3,10,2) 
 alpha = calc_alpha(R)   
 
+y=M_dot(R, M_0_start)
+
+
+
+
+for i in range(10):
+    y=sum(M_dot(R,M_0_start))
+    plt.scatter(i,y)
+
 
 
 print 'alphas:', alpha
@@ -160,6 +180,7 @@ print 'visc_freq:', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
 print 'visc_time:', viscous_timescale(R)
 print 'M_dot:', M_dot(R, M_0_start)
+
 
 
 
