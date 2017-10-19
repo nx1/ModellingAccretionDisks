@@ -84,6 +84,10 @@ Modular based code using subroutines/functions is preferred for versatillity and
 
 
 ============General Physics============
+m_dot(r,t), the local small variation of mass at each radius
+can be modelled as a sinosoidal variation close to A*sin(2*pi*f)
+where f is 1/(Viscous timescale) 
+
 "explain the spectral-timing properties of the X-ray variability"
 
 

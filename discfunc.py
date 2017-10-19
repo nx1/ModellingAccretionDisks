@@ -24,7 +24,7 @@ def create_disc (N,const,Rmax,rstart):
     
     '''
     Creates a basic disc with constant ratio between radii
-    Returns a numpy array.
+    Returns a python list array.
     
     inputs:
         N       = Number of Annuli
@@ -40,10 +40,10 @@ def create_disc (N,const,Rmax,rstart):
         else:
             R.append(R[i-1]*const)
             
-    return np.asarray(R)    #Converts python list to numpy array
+    return R    #Converts python list to numpy array
 
 
-def M_dot(R,M_0_start):
+def M_dot(R,t,M_0_start):
     '''
     Calculates the mass accretion at a given radii between two annuli
     
@@ -56,12 +56,13 @@ def M_dot(R,M_0_start):
     M_0(r) the LOCAL accretion rate at given radii
     M_0(r) is refered to as M_dot_local
     
-    m(r) is a small stochastic variation in mass accretion rate << 1
-    we currently make m(r) random between 0 and 0.1
-         (WE DON'T KNOW HOW TO MAKE m(r) CURRENTLY)
+    m_dot(r,t), the local small variation of mass at each radius
+    can be modelled as a sinosoidal variation close to A*sin(2*pi*f*t)?
+    where f is 1/(Viscous timescale)
 
     inputs:
         R         = Array of the radii
+        t         = time
         M_0_start = Starting outer radius mass accretion rate
 
     '''
@@ -69,7 +70,8 @@ def M_dot(R,M_0_start):
     #Creating Arrays to store values of M(r), M_0(r) and m(r)
     M_dot_local = [0]*len(R)
     M_dot_local[len(R)-1] = M_0_start
-    m_dot = [np.random.uniform(0.0,0.01) for i in range(len(R))]
+    m_dot = [np.sin(2 * np.pi * (1/viscous_timescale(R)[i])* t) for i in range(len(R))]
+    print 'mdot', m_dot
     M_dot = [0]*len(R)
     
     
@@ -125,7 +127,8 @@ def viscous_velocity(R):
 def viscous_timescale (R):
     '''
     Calculates the viscous timescale at a given radius
-    R/Viscous_velocity
+    R/Viscous_velocity    or    R^2 / viscosity
+    From eq 5.62 Accretion power in astrophysics.
     
     '''
     time_visc=[]
@@ -136,7 +139,11 @@ def viscous_timescale (R):
 
 def emissivity (R):
     '''
-    calculates emissivity, which describes the totsl energy loss
+    Calculates emissivity, which describes the total energy loss
+    
+    wiki:
+        "Emissivity is defined as the ratio of the energy radiated from 
+         a material's surface to that radiated from a blackbody"
     '''
     gamma=3
     em=[]
@@ -164,22 +171,21 @@ global alpha
 R = create_disc(5,3,10,2) 
 alpha = calc_alpha(R)   
 
-y=M_dot(R, M_0_start)
+y=M_dot(R, 1, M_0_start)
 
 
+for t in range(100):
+    print 'time', t/10.0
+    y=sum(M_dot(R, t/10.0, M_0_start))
+    plt.scatter(t,y)
 
-
-for i in range(10):
-    y=sum(M_dot(R,M_0_start))
-    plt.scatter(i,y)
-
-
-
+print '-------------------------------------'
+print 'Radii:', R
 print 'alphas:', alpha
 print 'visc_freq:', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
-print 'visc_time:', viscous_timescale(R)
-print 'M_dot:', M_dot(R, M_0_start)
+print 'visc_timescale:', viscous_timescale(R)
+print 'M_dot:', M_dot(R, 1, M_0_start)
 
 
 
