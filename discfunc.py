@@ -174,7 +174,7 @@ alpha = calc_alpha(R)
 y=M_dot(R, 1, M_0_start)
 
 
-for t in range(100):
+for t in np.arange(1e5,1e6,500):
     print 'time', t/10.0
     y=sum(M_dot(R, t/10.0, M_0_start))
     plt.scatter(t,y)
@@ -186,13 +186,3 @@ print 'visc_freq:', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
 print 'visc_timescale:', viscous_timescale(R)
 print 'M_dot:', M_dot(R, 1, M_0_start)
-
-
-
-
-
-
-
-
-
-    
