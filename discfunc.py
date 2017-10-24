@@ -71,7 +71,7 @@ def M_dot(R,t,M_0_start):
     M_dot_local = [0]*len(R)
     M_dot_local[len(R)-1] = M_0_start
     m_dot = [np.sin(2 * np.pi * (1/viscous_timescale(R)[i])* t) for i in range(len(R))]
-    print 'mdot', m_dot
+    #print 'mdot', m_dot
     M_dot = [0]*len(R)
     
     
@@ -171,13 +171,19 @@ global alpha
 R = create_disc(5,3,10,2) 
 alpha = calc_alpha(R)   
 
-y=M_dot(R, 1, M_0_start)
 
 
-for t in np.arange(1e5,1e6,500):
-    print 'time', t/10.0
-    y=sum(M_dot(R, t/10.0, M_0_start))
-    plt.scatter(t,y)
+y=[]
+T=[]
+for t in np.arange(0,1e7,1):
+    #print 'time', t/10.0
+    y.append(M_dot(R, t/10.0, M_0_start)[0])
+    #y.append(sum(M_dot(R, t/10.0, M_0_start)))
+    T.append(t)
+    
+    if t%50000==0:
+        print t
+plt.plot(T,y)
 
 print '-------------------------------------'
 print 'Radii:', R
