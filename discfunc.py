@@ -91,7 +91,7 @@ def M_dot(R,t,M_0_start):
     
     
 def calc_alpha (R):
-    alpha=[np.random.random() for i in range(len(R))]
+    alpha=[np.random.uniform(0.01,0.1) for i in range(len(R))]
     return alpha
 
 
@@ -175,7 +175,7 @@ alpha = calc_alpha(R)
 
 y=[]
 T=[]
-for t in np.arange(0,1e7,250):
+for t in np.arange(0,1e8,250):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
