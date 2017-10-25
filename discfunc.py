@@ -70,8 +70,10 @@ def M_dot(R,t,M_0_start):
     #Creating Arrays to store values of M(r), M_0(r) and m(r)
     M_dot_local = [0]*len(R)
     M_dot_local[len(R)-1] = M_0_start
-    m_dot = [np.sin(2 * np.pi * (1/viscous_timescale(R)[i])* t) for i in range(len(R))]
+    #m_dot = [np.sin(2 * np.pi * (1/viscous_timescale(R)[i])* t) for i in range(len(R))]
+    m_dot = [0.1*np.sin(2 * np.pi * (viscous_frequency(R)[i])* t) for i in range(len(R))]
     #print 'mdot', m_dot
+    #multiplied mdot by 0.1 to more accurately reflect that mdot is << 1
     M_dot = [0]*len(R)
     
     
@@ -89,9 +91,7 @@ def M_dot(R,t,M_0_start):
     
     
 def calc_alpha (R):
-    alpha=[]
-    for i in range(len(R)):
-        alpha.append(np.random.random())
+    alpha=[np.random.random() for i in range(len(R))]
     return alpha
 
 
@@ -129,7 +129,7 @@ def viscous_timescale (R):
     Calculates the viscous timescale at a given radius
     R/Viscous_velocity    or    R^2 / viscosity
     From eq 5.62 Accretion power in astrophysics.
-    
+    Time taken for the process to propogate from adjacent annulis
     '''
     time_visc=[]
     vel_visc=viscous_velocity(R)
@@ -175,9 +175,9 @@ alpha = calc_alpha(R)
 
 y=[]
 T=[]
-for t in np.arange(0,1e7,1):
+for t in np.arange(0,1e7,250):
     #print 'time', t/10.0
-    y.append(M_dot(R, t/10.0, M_0_start)[0])
+    y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
     T.append(t)
     
