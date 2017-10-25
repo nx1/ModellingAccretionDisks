@@ -175,11 +175,11 @@ alpha = calc_alpha(R)
 
 y=[]
 T=[]
-#<<<<<<< HEAD
-#for t in np.arange(0,1e8,250):
-#=======
+<<<<<<< HEAD
+for t in np.arange(0,1e8,250):
+=======
 for t in np.arange(0,1e8,5000):
-#>>>>>>> 576ef013e9e748730cb95f1a3799c3c3de8e9c05
+>>>>>>> 576ef013e9e748730cb95f1a3799c3c3de8e9c05
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
