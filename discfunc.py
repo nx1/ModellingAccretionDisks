@@ -176,14 +176,18 @@ alpha = calc_alpha(R)
 y=[]
 T=[]
 
-for t in np.arange(0,1e8,5000):
+loops = 1e8
+for t in np.arange(0,loops,5000):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
     T.append(t)
     
-    if t%500000==0:
-        print t
+    if t%(loops/10)==0:
+        print (t/loops)*100 , '%'
+        
+plt.xlabel('time')
+plt.ylabel('Mass accretion at R[0]')        
 plt.plot(T,y)
 
 print '-------------------------------------'
