@@ -6,8 +6,29 @@ Created on Tue Oct 17 14:44:25 2017
 """
 from math import *
 import random
-import discfunc as df
-          
+
+def create_disc (N,const,Rmax,rstart):
+    
+    '''
+    Creates a basic disc with constant ratio between radii
+    Returns a python list array.
+    
+    inputs:
+        N       = Number of Annuli
+        const   = Constant ratio between consecutive radii
+        Rmax    = Max Radius (CURRENTLY UNUSED)
+        rstart  = Radii of innermost disc
+    '''
+    
+    R = []
+    for i in range(N):
+        if i==0:
+            R.append(rstart)
+        else:
+            R.append(R[i-1]*const)
+            
+    return R    #Converts python list to numpy array
+
         
 def M_dot(R, t, M_0_Start):
 
@@ -42,8 +63,7 @@ def M_dot(R, t, M_0_Start):
             multm_dot=multm_dot*(m_dot_local[i]+1)
             M_dot[i]=M_dot[i+1]*multm_dot
     return M_dot
-R = df.create_disc(5,3,10,2)
-
+R=create_disc(5,1.2,5,6)
 Mdot=M_dot(R, None, 100)   
 print ("values for MDot",Mdot)
 
