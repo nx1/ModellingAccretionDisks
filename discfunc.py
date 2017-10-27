@@ -178,8 +178,8 @@ alpha = calc_alpha(R)
 y=[]
 T=[]
 
-tMax = 1e8
-for t in np.arange(0,tMax,5000):
+tMax = 1e11
+for t in np.arange(0,tMax,1000000):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
@@ -220,3 +220,6 @@ print 'visc_vel:', viscous_velocity(R)
 print 'visc_timescale:', viscous_timescale(R)
 print 'M_dot:', M_dot(R, 1, M_0_start)
 print '-------------------------------------'
+
+print ["%E" % tf for tf in viscous_timescale(R)]
+
