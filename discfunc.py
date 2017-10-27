@@ -168,6 +168,8 @@ M_0_start = 5
 due to random number generation'''
 global alpha 
 
+#Arvelo and Uttley fix the first innermost radius at 6 Units
+#The number of annuli considered is also N = 1000
 R = create_disc(5,3,10,2) 
 alpha = calc_alpha(R)   
 
@@ -176,19 +178,39 @@ alpha = calc_alpha(R)
 y=[]
 T=[]
 
-loops = 1e8
-for t in np.arange(0,loops,5000):
+tMax = 1e8
+for t in np.arange(0,tMax,5000):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
     T.append(t)
     
-    if t%(loops/10)==0:
-        print (t/loops)*100 , '%'
-        
+    if t%(tMax/10)==0:
+        print (t/tMax)*100 , '%'
+   
+    
+plt.figure(1)    
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
 plt.plot(T,y)
+
+
+#Attempted PSD (completely wrong)
+plt.figure(2)  
+plt.xlabel('frequency')
+plt.ylabel('Fourier transform of something * f')  
+y2 = y*np.fft.fft(y)      #fast fourier transform * freq
+f = 1 / np.asarray(T)   #1/t is basically frequency
+plt.semilogx(f,y2)
+
+
+'''
+#attempted RMS (literally awful)
+plt.figure(3)
+yArray = np.asarray(y)
+rms = np.sqrt(np.mean(yArray**2))
+plt.plot(rms,yArray)
+'''
 
 print '-------------------------------------'
 print 'Radii:', R
@@ -197,3 +219,4 @@ print 'visc_freq:', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
 print 'visc_timescale:', viscous_timescale(R)
 print 'M_dot:', M_dot(R, 1, M_0_start)
+print '-------------------------------------'
