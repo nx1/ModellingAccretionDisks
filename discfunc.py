@@ -129,7 +129,7 @@ def viscous_timescale (R):
     Calculates the viscous timescale at a given radius
     R/Viscous_velocity    or    R^2 / viscosity
     From eq 5.62 Accretion power in astrophysics.
-    Time taken for the process to propogate from adjacent annulis
+    Time taken for the process to propogate from adjacent annulus
     '''
     time_visc=[]
     vel_visc=viscous_velocity(R)
@@ -170,7 +170,7 @@ global alpha
 
 #Arvelo and Uttley fix the first innermost radius at 6 Units
 #The number of annuli considered is also N = 1000
-R = create_disc(5,3,10,2) 
+R = create_disc(10,1.5,10,6) 
 alpha = calc_alpha(R)   
 
 
@@ -178,8 +178,8 @@ alpha = calc_alpha(R)
 y=[]
 T=[]
 
-tMax = 1e11
-for t in np.arange(0,tMax,1000000):
+tMax = 1e9
+for t in np.arange(0,tMax,50000):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
@@ -215,11 +215,12 @@ plt.plot(rms,yArray)
 print '-------------------------------------'
 print 'Radii:', R
 print 'alphas:', alpha
-print 'visc_freq:', viscous_frequency(R)
-print 'visc_vel:', viscous_velocity(R)
-print 'visc_timescale:', viscous_timescale(R)
-print 'M_dot:', M_dot(R, 1, M_0_start)
+print 'visc_timescale:'
+print ['%E' % tf for tf in viscous_timescale(R)]
+print 'visc_freq: '
+print ['%E' % tf for tf in viscous_frequency(R)]
+print 'visc_vel:'
+print [' %E' % tf for tf in viscous_velocity(R)]
+print 'M_dot: '
+print ['%E' % tf for tf in M_dot(R, 1, M_0_start)]
 print '-------------------------------------'
-
-print ["%E" % tf for tf in viscous_timescale(R)]
-
