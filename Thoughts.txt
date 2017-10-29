@@ -94,6 +94,10 @@ where f is 1/(Viscous timescale)
 "Most of the variability power is in the form of aperiodic fluctuations
 that span several orders of magnitude in temporal frequency"
 
+"we assume that each independent annulus produces a pattern
+of fluctuations m_dot(r , t), having most of the variability power
+at the local viscous frequency"  -Uttley
+
 "3 - 80M_sol black holes are created through the collapse of Massive stars" (Well established)
 
 Supermassive black holes 10^6 - 10^9 however are not so established
@@ -142,7 +146,30 @@ at a given radius, the rest of the disc is obtained by inegrating over 2*pi*r
 ----------------------------
 
 
+---------------------------
+Functions in Latex format:
 
+M_dot:
+	\dot{M} ( r_{i} , t ) = \dot{M_{0}} \prod_{j=0}^{i} 1 + \dot{m} ( r_{j} , t )
+		
+viscous_frequency:
+	R^{-\frac{3}{2}} \left ( \frac{H}{R} \right )^{2}  \frac{\alpha}{2\pi}
+	
+	
+viscous velocity aka radial drift velocity
+	R^{-\frac{1}{2}} \left ( \frac{H}{R} \right )^{2}  \alpha
+	
+viscous_timescale
+	From eq 5.62 Accretion power in astrophysics.
+	\frac{R}{v_{R}}
+
+emissivity
+	
+	
+
+	
+	
+---------------------------
 
 ============Knigge Email============
 • Decide on the physical system we're modelling 

@@ -9,9 +9,7 @@ Authors: Vysakh Salil, Norman Khan
 
 Contains the main functions used for the accretion disk model 
 Heavily based on the model proposed by P Arevalo P Uttley 2005
-Can easily be imported by using:
-    
-    import discfunc as df
+
 """
 #Imports
 import numpy as np
@@ -70,9 +68,10 @@ def M_dot(R,t,M_0_start):
     #Creating Arrays to store values of M(r), M_0(r) and m(r)
     M_dot_local = [0]*len(R)
     M_dot_local[len(R)-1] = M_0_start
-    #m_dot = [np.sin(2 * np.pi * (1/viscous_timescale(R)[i])* t) for i in range(len(R))]
-    m_dot = [0.1*np.sin(2 * np.pi * (viscous_frequency(R)[i])* t) for i in range(len(R))]
+    m_dot = [0.1*np.sin(2 * np.pi * (viscous_frequency(R)[i])* t) 
+            for i in range(len(R))]
     #print 'mdot', m_dot
+    
     #multiplied mdot by 0.1 to more accurately reflect that mdot is << 1
     M_dot = [0]*len(R)
     
@@ -158,19 +157,23 @@ def emissivity (R):
 
 
 H_R_=0.01 # H/R (height of the disc over total radius)
-M_0_start = 5
+M_0_start = 1
 
 
 #================================================#
 #=======================MAIN=====================#
 #================================================#
+
+'''Arvelo and Uttley fix the first innermost radius at 6 Units
+The number of annuli considered is also N = 1000
+'''
+#N, ratio, rmax, rmin
+R = create_disc(10,1.5,10,6)
+
+
 '''Alphas are currently created once as a global variable 
 due to random number generation'''
 global alpha 
-
-#Arvelo and Uttley fix the first innermost radius at 6 Units
-#The number of annuli considered is also N = 1000
-R = create_disc(10,1.5,10,6) 
 alpha = calc_alpha(R)   
 
 
@@ -179,6 +182,7 @@ y=[]
 T=[]
 
 tMax = 1e9
+
 for t in np.arange(0,tMax,50000):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
@@ -223,4 +227,5 @@ print 'visc_vel:'
 print [' %E' % tf for tf in viscous_velocity(R)]
 print 'M_dot: '
 print ['%E' % tf for tf in M_dot(R, 1, M_0_start)]
+print M_dot(R, 1, M_0_start)
 print '-------------------------------------'
