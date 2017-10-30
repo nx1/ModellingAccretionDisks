@@ -111,6 +111,7 @@ def viscous_frequency(R):
 
 def viscous_velocity(R):
     '''
+    Also sometimes called the radial drift velocity.
     Calculates the viscous velocity at a given radius
     based off the model by p.arevalo and p.uttley
     
@@ -149,7 +150,29 @@ def emissivity (R):
     for i in range(len(R)):
         em.append((R[i]**-gamma)*((R[0]/R[i])**0.5))
     return em
-        
+
+def T_eff (R):
+    '''
+    Caclulates the effective temperature of the disk at a given radius
+    based off equation 5.43 in Accretion power in astrophysics
+    (CONSTANTS OMMITED)
+    '''
+    T_eff = [R[i]**(-0.75) for i in range(len(R))]
+    return T_eff
+
+def B_nu(R, nu):
+    '''
+    Calculates the blackbody spectral irradiance based off eq 5.44.2
+    Accretion power in astrophysics (CONSTANTS OMMITED)
+    
+    Inputs:
+        R = list of radii
+        nu = frequency   
+    '''
+    B_nu=[]
+    for i in range(len(R)):
+        B_nu.append( 1 * nu**3 / ((np.e**(1 * nu /T_eff(R)[i]))-1) )
+    return B_nu
 
 #================================================#
 #====================CONSTANTS===================#
@@ -198,7 +221,7 @@ plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
 plt.plot(T,y)
 
-
+#------------------------------------
 #Attempted PSD (completely wrong)
 plt.figure(2)  
 plt.xlabel('frequency')
@@ -206,6 +229,24 @@ plt.ylabel('Fourier transform of something * f')
 y2 = y*np.fft.fft(y)      #fast fourier transform * freq
 f = 1 / np.asarray(T)   #1/t is basically frequency
 plt.semilogx(f,y2)
+
+#------------------------------------
+
+
+
+f=[]
+flux = []
+for j in np.arange(0,1,0.0001):
+    fluxstore = []
+    for i in range(len(R)):
+        fluxstore.append(B_nu(R,j)[i] * 2 * np.pi * R[i])
+    f.append(j)
+    flux.append(sum(fluxstore))
+    
+    
+plt.figure(3)  
+plt.plot(f,flux)
+
 
 
 '''
