@@ -168,12 +168,21 @@ def B_nu(R, nu):
     Inputs:
         R = list of radii
         nu = frequency   
+    
+    Note: B_nu is large at small radii however it is a measure of density.
     '''
     B_nu=[]
     for i in range(len(R)):
         B_nu.append( 1 * nu**3 / ((np.e**(1 * nu /T_eff(R)[i]))-1) )
     return B_nu
 
+def calc_area(R):
+    '''
+    Calculates the area of annuli from list of radii
+    Returns len(R) - 1 list of areas
+    '''
+    A = [np.pi * (R[i+1] ** 2 - R[i] ** 2) for i in range (len(R) - 1)]
+    return A
 #================================================#
 #====================CONSTANTS===================#
 #================================================#
@@ -181,6 +190,7 @@ def B_nu(R, nu):
 
 H_R_=0.01 # H/R (height of the disc over total radius)
 M_0_start = 1
+VERY_BIG = 1E50
 
 
 #================================================#
@@ -191,7 +201,7 @@ M_0_start = 1
 The number of annuli considered is also N = 1000
 '''
 #N, ratio, rmax, rmin
-R = create_disc(10,1.5,10,6)
+R = create_disc(30,1.1,10,6)
 
 
 '''Alphas are currently created once as a global variable 
@@ -205,7 +215,7 @@ y=[]
 T=[]
 
 tMax = 1e9
-
+'''
 for t in np.arange(0,tMax,50000):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
@@ -231,31 +241,47 @@ f = 1 / np.asarray(T)   #1/t is basically frequency
 plt.semilogx(f,y2)
 
 #------------------------------------
-
-
-
-f=[]
+'''
+#------------------------------------
+#Flux vs radius
+B=B_nu(R, 1)
+A=calc_area(R)
 flux = []
-for j in np.arange(0,1,0.0001):
-    fluxstore = []
-    for i in range(len(R)):
-        fluxstore.append(B_nu(R,j)[i] * 2 * np.pi * R[i])
-    f.append(j)
-    flux.append(sum(fluxstore))
-    
-    
-plt.figure(3)  
-plt.plot(f,flux)
+R_new=[]
 
 
+for i in range (len(R)-1):
+    flux.append(A[i]*B[i])
+    R_new.append(R[i])
 
-'''
-#attempted RMS (literally awful)
 plt.figure(3)
-yArray = np.asarray(y)
-rms = np.sqrt(np.mean(yArray**2))
-plt.plot(rms,yArray)
-'''
+plt.title('Radius vs flux for frequency = 1 in loglog')
+plt.xlabel('Radius')
+plt.ylabel('Flux')
+plt.loglog(R_new,flux)
+
+
+Bnew=[]
+flux_total=[]
+F=np.arange(1,20,0.01)
+for f in F:
+    flux =[]
+    for i in range (len(R)-1):
+        Bnew=B_nu(R, f)
+        flux.append(A[i] * Bnew[i])
+    flux_total.append(sum (flux) )
+
+plt.figure(4)
+
+F_array = np.asarray(F)
+plt.title('Frequency vs total flux for varying frequencies in loglog')
+plt.xlabel('Frequency')
+plt.ylabel('Total Flux')
+plt.loglog(F_array,flux_total)
+#------------------------------------
+
+
+
 
 print '-------------------------------------'
 print 'Radii:', R

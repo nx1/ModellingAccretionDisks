@@ -2,7 +2,6 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import discfunc as df
 
 
 def create_polar (R):
