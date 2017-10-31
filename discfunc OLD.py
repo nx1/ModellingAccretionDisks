@@ -103,11 +103,9 @@ def viscous_frequency(R):
         R         = Array of the radii
         M_0_start = Starting outer radius mass accretion rate
     '''
-    f_visc=np.array([])
-    #f_visc=[]
+    f_visc=[]
     for i in range(len(R)):
-        np.append(f_visc,(((R[i])**(-3/2)) * ((H_R_)**2) * (alpha[i]/(2*np.pi))))
-        #f_visc.append(((R[i])**(-3/2)) * ((H_R_)**2) * (alpha[i]/(2*np.pi)))
+        f_visc.append(((R[i])**(-3/2)) * ((H_R_)**2) * (alpha[i]/(2*np.pi)))
     return f_visc
 
 
@@ -121,11 +119,9 @@ def viscous_velocity(R):
         R    = Array of the radii
         H_R_ = Starting outer radius mass accretion rate
     '''
-    vel_visc= np.array([])
-    #vel_visc=[]
+    vel_visc=[]
     for i in range(len(R)):
-        np.append(vel_visc,(((R[i])**(-0.5))  *  ((H_R_)**2)  *  (alpha[i])))
-        #vel_visc.append(((R[i])**(-0.5))  *  ((H_R_)**2)  *  (alpha[i]))
+        vel_visc.append(((R[i])**(-0.5))  *  ((H_R_)**2)  *  (alpha[i]))
     return vel_visc
 
 def viscous_timescale (R):
@@ -135,12 +131,10 @@ def viscous_timescale (R):
     From eq 5.62 Accretion power in astrophysics.
     Time taken for the process to propogate from adjacent annulus
     '''
-    time_visc= np.array([])
-    #time_visc=[]
+    time_visc=[]
     vel_visc=viscous_velocity(R)
     for i in range (len(R)):
-        np.append(time_visc,(R[i]/vel_visc[i]))
-        #time_visc.append(R[i]/vel_visc[i])
+        time_visc.append(R[i]/vel_visc[i])
     return time_visc
 
 def emissivity (R):
@@ -152,10 +146,9 @@ def emissivity (R):
          a material's surface to that radiated from a blackbody"
     '''
     gamma=3
-    em=np.array([])
+    em=[]
     for i in range(len(R)):
-        np.append(em,((R[i]**-gamma)*((R[0]/R[i])**0.5)))
-        #em.append((R[i]**-gamma)*((R[0]/R[i])**0.5))
+        em.append((R[i]**-gamma)*((R[0]/R[i])**0.5))
     return em
 
 def T_eff (R):
@@ -164,8 +157,7 @@ def T_eff (R):
     based off equation 5.43 in Accretion power in astrophysics
     (CONSTANTS OMMITED)
     '''
-    np.array([R[i]**(-0.75) for i in range(len(R))])
-    #T_eff = [R[i]**(-0.75) for i in range(len(R))]
+    T_eff = [R[i]**(-0.75) for i in range(len(R))]
     return T_eff
 
 def B_nu(R, nu):
@@ -209,7 +201,7 @@ VERY_BIG = 1E50
 The number of annuli considered is also N = 1000
 '''
 #N, ratio, rmax, rmin
-R = create_disc(30,1.1,10,6)
+R = create_disc(10,1.5,10,6)
 
 
 '''Alphas are currently created once as a global variable 
@@ -223,8 +215,8 @@ y=[]
 T=[]
 
 tMax = 1e9
-'''
-for t in np.arange(0,tMax,50000):
+
+for t in np.arange(0,tMax,500000):
     #print 'time', t/10.0
     y.append(M_dot(R, t, M_0_start)[0])
     #y.append(sum(M_dot(R, t/10.0, M_0_start)))
@@ -249,7 +241,7 @@ f = 1 / np.asarray(T)   #1/t is basically frequency
 plt.semilogx(f,y2)
 
 #------------------------------------
-'''
+
 #------------------------------------
 #Flux vs radius
 B=B_nu(R, 1)

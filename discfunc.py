@@ -8,8 +8,7 @@ Created on Mon Oct  9 16:18:50 2017
 Authors: Vysakh Salil, Norman Khan
 
 Contains the main functions used for the accretion disk model 
-Heavily based on the model proposed by P Arevalo P Uttley 2005
-
+Heavily based on the model proposed by P Arevalo P Uttley 2005 
 """
 #Imports
 import numpy as np
@@ -31,14 +30,14 @@ def create_disc (N,const,Rmax,rstart):
         rstart  = Radii of innermost disc
     '''
     
-    R = []
+    R = np.array([])
     for i in range(N):
         if i==0:
-            R.append(rstart)
+            R = np.append(R,rstart)
         else:
-            R.append(R[i-1]*const)
+            R = np.append(R, R[i-1]*const)
             
-    return R    #Converts python list to numpy array
+    return R
 
 
 def M_dot(R,t,M_0_start):
@@ -66,14 +65,16 @@ def M_dot(R,t,M_0_start):
     '''
     
     #Creating Arrays to store values of M(r), M_0(r) and m(r)
-    M_dot_local = [0]*len(R)
+    M_dot_local = np.zeros(len(R))
     M_dot_local[len(R)-1] = M_0_start
-    m_dot = [0.1*np.sin(2 * np.pi * (viscous_frequency(R)[i])* t) 
-            for i in range(len(R))]
+    m_dot = np.array([0.1*np.sin(2 * np.pi * (viscous_frequency(R)[i])* t) 
+            for i in range(len(R))])
+    
+    
     #print 'mdot', m_dot
     
     #multiplied mdot by 0.1 to more accurately reflect that mdot is << 1
-    M_dot = [0]*len(R)
+    M_dot = np.zeros(len(R))
     
     
     for i in range(len(R)):
@@ -90,7 +91,7 @@ def M_dot(R,t,M_0_start):
     
     
 def calc_alpha (R):
-    alpha=[np.random.uniform(0.01,0.1) for i in range(len(R))]
+    alpha=np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
     return alpha
 
 
@@ -103,9 +104,10 @@ def viscous_frequency(R):
         R         = Array of the radii
         M_0_start = Starting outer radius mass accretion rate
     '''
-    f_visc=[]
+    f_visc=np.array([])
     for i in range(len(R)):
-        f_visc.append(((R[i])**(-3/2)) * ((H_R_)**2) * (alpha[i]/(2*np.pi)))
+        f_visc = np.append(
+                f_visc,(((R[i])**(-3/2)) * ((H_R_)**2) * (alpha[i]/(2*np.pi))))
     return f_visc
 
 
@@ -119,9 +121,9 @@ def viscous_velocity(R):
         R    = Array of the radii
         H_R_ = Starting outer radius mass accretion rate
     '''
-    vel_visc=[]
+    vel_visc= np.array([])
     for i in range(len(R)):
-        vel_visc.append(((R[i])**(-0.5))  *  ((H_R_)**2)  *  (alpha[i]))
+        vel_visc = np.append(vel_visc,(((R[i])**(-0.5))  *  ((H_R_)**2)  *  (alpha[i])))
     return vel_visc
 
 def viscous_timescale (R):
@@ -131,10 +133,10 @@ def viscous_timescale (R):
     From eq 5.62 Accretion power in astrophysics.
     Time taken for the process to propogate from adjacent annulus
     '''
-    time_visc=[]
+    time_visc= np.array([])
     vel_visc=viscous_velocity(R)
     for i in range (len(R)):
-        time_visc.append(R[i]/vel_visc[i])
+        time_visc = np.append(time_visc,(R[i]/vel_visc[i]))
     return time_visc
 
 def emissivity (R):
@@ -146,9 +148,9 @@ def emissivity (R):
          a material's surface to that radiated from a blackbody"
     '''
     gamma=3
-    em=[]
+    em=np.array([])
     for i in range(len(R)):
-        em.append((R[i]**-gamma)*((R[0]/R[i])**0.5))
+        em = np.append(em,((R[i]**-gamma)*((R[0]/R[i])**0.5)))
     return em
 
 def T_eff (R):
@@ -157,7 +159,7 @@ def T_eff (R):
     based off equation 5.43 in Accretion power in astrophysics
     (CONSTANTS OMMITED)
     '''
-    T_eff = [R[i]**(-0.75) for i in range(len(R))]
+    T_eff = np.array([R[i]**(-0.75) for i in range(len(R))])
     return T_eff
 
 def B_nu(R, nu):
@@ -171,9 +173,9 @@ def B_nu(R, nu):
     
     Note: B_nu is large at small radii however it is a measure of density.
     '''
-    B_nu=[]
+    B_nu=np.array([])
     for i in range(len(R)):
-        B_nu.append( 1 * nu**3 / ((np.e**(1 * nu /T_eff(R)[i]))-1) )
+        B_nu = np.append(B_nu, 1 * nu**3 / ((np.e**(1 * nu /T_eff(R)[i]))-1) )
     return B_nu
 
 def calc_area(R):
@@ -181,7 +183,7 @@ def calc_area(R):
     Calculates the area of annuli from list of radii
     Returns len(R) - 1 list of areas
     '''
-    A = [np.pi * (R[i+1] ** 2 - R[i] ** 2) for i in range (len(R) - 1)]
+    A = np.array([np.pi * (R[i+1] ** 2 - R[i] ** 2) for i in range (len(R) - 1)])
     return A
 #================================================#
 #====================CONSTANTS===================#
@@ -189,7 +191,7 @@ def calc_area(R):
 
 
 H_R_=0.01 # H/R (height of the disc over total radius)
-M_0_start = 1
+M_0_start = 10
 VERY_BIG = 1E50
 
 
@@ -201,7 +203,7 @@ VERY_BIG = 1E50
 The number of annuli considered is also N = 1000
 '''
 #N, ratio, rmax, rmin
-R = create_disc(30,1.1,10,6)
+R = create_disc(10,1.5,10,6)
 
 
 '''Alphas are currently created once as a global variable 
@@ -211,16 +213,14 @@ alpha = calc_alpha(R)
 
 
 
-y=[]
-T=[]
+y=np.array([])
+T=np.array([])
 
 tMax = 1e9
-'''
-for t in np.arange(0,tMax,50000):
-    #print 'time', t/10.0
-    y.append(M_dot(R, t, M_0_start)[0])
-    #y.append(sum(M_dot(R, t/10.0, M_0_start)))
-    T.append(t)
+
+for t in np.arange(0,tMax,5e5):
+    y = np.append(y,M_dot(R, t, M_0_start)[0])
+    T=np.append(T,t)
     
     if t%(tMax/10)==0:
         print (t/tMax)*100 , '%'
@@ -241,13 +241,13 @@ f = 1 / np.asarray(T)   #1/t is basically frequency
 plt.semilogx(f,y2)
 
 #------------------------------------
-'''
+
 #------------------------------------
 #Flux vs radius
-B=B_nu(R, 1)
-A=calc_area(R)
+B = B_nu(R, 1)
+A = calc_area(R)
 flux = []
-R_new=[]
+R_new = []
 
 
 for i in range (len(R)-1):
@@ -286,13 +286,8 @@ plt.loglog(F_array,flux_total)
 print '-------------------------------------'
 print 'Radii:', R
 print 'alphas:', alpha
-print 'visc_timescale:'
-print ['%E' % tf for tf in viscous_timescale(R)]
-print 'visc_freq: '
-print ['%E' % tf for tf in viscous_frequency(R)]
-print 'visc_vel:'
-print [' %E' % tf for tf in viscous_velocity(R)]
-print 'M_dot: '
-print ['%E' % tf for tf in M_dot(R, 1, M_0_start)]
-print M_dot(R, 1, M_0_start)
+print 'visc_timescale:', viscous_timescale(R)
+print 'visc_freq: ', viscous_frequency(R)
+print 'visc_vel:', viscous_velocity(R)
+print 'M_dot: ', M_dot(R, 1, M_0_start)
 print '-------------------------------------'
