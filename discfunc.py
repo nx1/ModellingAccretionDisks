@@ -89,7 +89,6 @@ def M_dot(R,t,M_0_start):
         else:
             return M_dot
     
-    
 def calc_alpha (R):
     alpha=np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
     return alpha
@@ -126,6 +125,7 @@ def viscous_velocity(R):
         vel_visc = np.append(vel_visc,(((R[i])**(-0.5))  *  ((H_R_)**2)  *  (alpha[i])))
     return vel_visc
 
+
 def viscous_timescale (R):
     '''
     Calculates the viscous timescale at a given radius
@@ -138,6 +138,7 @@ def viscous_timescale (R):
     for i in range (len(R)):
         time_visc = np.append(time_visc,(R[i]/vel_visc[i]))
     return time_visc
+
 
 def emissivity (R):
     '''
@@ -153,6 +154,7 @@ def emissivity (R):
         em = np.append(em,((R[i]**-gamma)*((R[0]/R[i])**0.5)))
     return em
 
+
 def T_eff (R):
     '''
     Caclulates the effective temperature of the disk at a given radius
@@ -161,6 +163,7 @@ def T_eff (R):
     '''
     T_eff = np.array([R[i]**(-0.75) for i in range(len(R))])
     return T_eff
+
 
 def B_nu(R, nu):
     '''
@@ -177,6 +180,7 @@ def B_nu(R, nu):
     for i in range(len(R)):
         B_nu = np.append(B_nu, 1 * nu**3 / ((np.e**(1 * nu /T_eff(R)[i]))-1) )
     return B_nu
+
 
 def calc_area(R):
     '''
@@ -260,10 +264,12 @@ plt.xlabel('Radius')
 plt.ylabel('Flux')
 plt.loglog(R_new,flux)
 
+#------------------------------------
+#Total Flux vs frequency
 
 Bnew=[]
 flux_total=[]
-F=np.arange(1,20,0.01)
+F=np.arange(1,30,0.01)
 for f in F:
     flux =[]
     for i in range (len(R)-1):
@@ -272,14 +278,27 @@ for f in F:
     flux_total.append(sum (flux) )
 
 plt.figure(4)
-
 F_array = np.asarray(F)
 plt.title('Frequency vs total flux for varying frequencies in loglog')
 plt.xlabel('Frequency')
 plt.ylabel('Total Flux')
 plt.loglog(F_array,flux_total)
 #------------------------------------
+#Emissivity Flux vs radius
+em=emissivity(R)
+em_flux = []
+R_new = []
 
+
+for i in range (len(R)-1):
+    em_flux.append(A[i]*em[i])
+    R_new.append(R[i])
+
+plt.figure(5)
+plt.title('Radius vs em flux for frequency = 1 in loglog')
+plt.xlabel('Radius')
+plt.ylabel('em Flux')
+plt.plot(R_new,em_flux)
 
 
 
