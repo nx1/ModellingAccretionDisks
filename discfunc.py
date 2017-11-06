@@ -11,7 +11,6 @@ Contains the main functions used for the accretion disk model
 Heavily based on the model proposed by P Arevalo P Uttley 2005 
 """
 #Imports
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time #remove once finished
