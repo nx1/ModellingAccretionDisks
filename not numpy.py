@@ -6,6 +6,8 @@ Created on Tue Oct 17 14:44:25 2017
 """
 from math import *
 import random
+from time import time
+import numpy as np
 
 def create_disc (N,const,Rmax,rstart):
     
@@ -46,24 +48,31 @@ def M_dot(R, t, M_0_Start):
     m_dot_local = [0.0]*len(R)
     M_dot_local = [0.0]*len(R)
     M_dot_local[len(R)-1] = M_0_Start
+                
     multm_dot=1.0 #multiplicative term 
     
-    for i in range(len(R)):# creating m_dot_local
-        m_dot_local[i]=random.uniform(0.0,0.1)
-        #m_dot_local is <<1
-    m_dot_local.sort()
-    m_dot_local.reverse()
+    
+    
     print ("mdot in descending order",m_dot_local)
     
     for i in range(len(R)-1,-1,-1):
+        multm_dot=multm_dot*(m_dot_local[i]+1)
         if i==(len(R)-1):
             M_dot[i]=M_dot_local[i]*(m_dot_local[i]+1)
-            multm_dot=multm_dot*(m_dot_local[i]+1)
         else:
-            multm_dot=multm_dot*(m_dot_local[i]+1)
             M_dot[i]=M_dot[i+1]*multm_dot
     return M_dot
-R=create_disc(5,1.2,5,6)
-Mdot=M_dot(R, None, 100)   
+
+
+
+R=create_disc(3,2,6,10)
+Mdot=M_dot(R, None, 10)  
+
+
+time0=time()
+
+
 print ("values for MDot",Mdot)
 
+time1=time()
+print 'time taken:', time1-time0
