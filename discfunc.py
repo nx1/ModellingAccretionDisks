@@ -11,6 +11,7 @@ Contains the main functions used for the accretion disk model
 Heavily based on the model proposed by P Arevalo P Uttley 2005 
 """
 #Imports
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time #remove once finished
@@ -57,6 +58,8 @@ def M_dot(R,t,M_0_start):
     m_dot(r,t), the local small variation of mass at each radius
     can be modelled as a sinosoidal variation close to A*sin(2*pi*f*t)?
     where f is 1/(Viscous timescale)
+        It will later be modelled as a power noise distribution as described
+        by Timmer and Koenig (1995)
 
     inputs:
         R         = Array of the radii
@@ -182,9 +185,14 @@ M_0_start = 10.0
 VERY_BIG = 1E50
 
 
+
+
 #Disk constants
-N = 20
-const = 1.5
+'''Arvelo and Uttley fix the first innermost radius at 6 Units
+The number of annuli considered is also N = 1000
+'''
+N = 10
+const = 1.01
 Rmin = 6.0
 Rmax = 10.0
 
@@ -192,56 +200,47 @@ Rmax = 10.0
 #================================================#
 #=======================MAIN=====================#
 #================================================#
-
 time0 = time()
 
-'''Arvelo and Uttley fix the first innermost radius at 6 Units
-The number of annuli considered is also N = 1000
-'''
-#N, ratio, rmax, rmin
 R = create_disc(N, const, Rmin, Rmax)
-
-
-'''Alphas are currently created once as a global variable 
-due to random number generation'''
-global alpha
-#alpha = calc_alpha(R)   
 alpha = 0.1*np.ones(len(R))
-
-
+#alpha = calc_alpha(R) 
 
 print '-------------------------------------'
 print 'Radii:', R
 print 'alphas:', alpha
 print 'visc_timescale:', viscous_timescale(R)
-print '1/visc_time', 1/viscous_timescale(R)
 print 'visc_freq: ', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
 print 'M_dot: ', M_dot(R, 1, M_0_start)
 print '-------------------------------------'
 
-
-
+M=M_dot(R, 1, M_0_start)
 
 
 
 y=np.array([])
 T=np.array([])
+tMax = 10*int(max(viscous_timescale(R)))
 
 
-tMax = int(max(viscous_timescale(R)))
-
-
-for t in np.arange(0,tMax,tMax/100):
+for t in np.arange(0,tMax,tMax/1000):
     y = np.append(y,M_dot(R, t, M_0_start)[0])
-    T=np.append(T,t)
+    T = np.append(T,t)
+    
+    percents = round(100.0 * t / float(tMax), 1)
+    if percents%10.0==0:
+        print percents, '%', '| t =', t, '/', tMax
+    
 
    
     
 plt.figure(1)    
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
-plt.plot(T,y)
+plt.semilogy(T,y)
+
+
 
 #------------------------------------
 #Attempted PSD (completely wrong)
@@ -249,22 +248,20 @@ plt.figure(2)
 plt.xlabel('frequency')
 plt.ylabel('Fourier transform of something * f')  
 y2 = y*np.fft.fft(y)      #fast fourier transform * freq
-f = 1 / np.asarray(T)   #1/t is basically frequency
+f = 1 / T   #1/t is basically frequency
 plt.semilogx(f,y2)
-
 #------------------------------------
+'''
 
+'''
 #------------------------------------
 #Flux vs radius
 B = B_nu(R, 1)
+B = np.delete(B,-1)
 A = calc_area(R)
-flux = []
-R_new = []
 
-
-for i in range (len(R)-1):
-    flux.append(A[i]*B[i])
-    R_new.append(R[i])
+flux = A*B
+R_new = np.delete(R,-1)
 
 plt.figure(3)
 plt.title('Radius vs flux for frequency = 1 in loglog')
