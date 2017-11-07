@@ -190,7 +190,7 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 10
+N = 11
 const = 1.01
 Rmin = 6.0
 Rmax = 10.0
@@ -202,8 +202,8 @@ Rmax = 10.0
 time0 = time()
 
 R = create_disc(N, const, Rmin, Rmax)
-alpha = 0.1*np.ones(len(R))
-#alpha = calc_alpha(R) 
+#alpha = 0.1*np.ones(len(R))
+alpha = calc_alpha(R) 
 
 print '-------------------------------------'
 print 'Radii:', R
@@ -220,10 +220,14 @@ M=M_dot(R, 1, M_0_start)
 
 y=np.array([])
 T=np.array([])
+
 tMax = 10*int(max(viscous_timescale(R)))
 
 
-for t in np.arange(0,tMax,tMax/1000):
+timeSteps = 1000
+
+
+for t in np.arange(0,tMax,tMax/timeSteps):
     y = np.append(y,M_dot(R, t, M_0_start)[0])
     T = np.append(T,t)
     
@@ -232,27 +236,44 @@ for t in np.arange(0,tMax,tMax/1000):
         print percents, '%', '| t =', t, '/', tMax
     
 
-   
-    
 plt.figure(1)    
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
-plt.semilogy(T,y)
+plt.plot(T,y)
 
 
 
-#------------------------------------
-#Attempted PSD (completely wrong)
-plt.figure(2)  
-plt.xlabel('frequency')
-plt.ylabel('Fourier transform of something * f')  
-y2 = y*np.fft.fft(y)      #fast fourier transform * freq
-f = 1 / T   #1/t is basically frequency
-plt.semilogx(f,y2)
-#------------------------------------
+a = np.array_split(T, len(T)/(timeSteps/10))
+b = np.array_split(y, len(y)/(timeSteps/10))
+
+plt.figure(2) 
+plt.xlabel('count rate')
+plt.ylabel('rms')   
+
+
+for i in range(len(a)):
+    a_avg = np.average(a[i])
+    b_avg = np.average(b[i])
+    print 'bavg', b_avg
+    
+    a_rms = np.sqrt(np.average(a[i] ** 2))
+    b_rms = np.sqrt(np.average(b[i] ** 2))
+    print 'brms', b_rms
+    
+    plt.scatter(b_avg,b_rms)
+
+
+
+
+
+
+
+
+
+
+
 '''
 
-'''
 #------------------------------------
 #Flux vs radius
 B = B_nu(R, 1)
@@ -262,11 +283,14 @@ A = calc_area(R)
 flux = A*B
 R_new = np.delete(R,-1)
 
-plt.figure(3)
+plt.figure(2)
 plt.title('Radius vs flux for frequency = 1 in loglog')
 plt.xlabel('Radius')
 plt.ylabel('Flux')
 plt.loglog(R_new,flux)
+
+
+
 
 #------------------------------------
 #Total Flux vs frequency
@@ -281,7 +305,7 @@ for f in F:
         flux.append(A[i] * Bnew[i])
     flux_total.append(sum (flux) )
 
-plt.figure(4)
+plt.figure(3)
 F_array = np.asarray(F)
 plt.title('Frequency vs total flux for varying frequencies in loglog')
 plt.xlabel('Frequency')
@@ -304,6 +328,6 @@ plt.xlabel('Radius')
 plt.ylabel('em Flux')
 plt.plot(R_new,em_flux)
 
-
+'''
 time1 = time()
 print 'Time taken', time1-time0
