@@ -14,7 +14,8 @@ Heavily based on the model proposed by P Arevalo P Uttley 2005
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time #remove once finished
-
+from astroML.time_series.generate import generate_power_law
+from scipy import stats
 
 #================================================#
 #====================FUNCTIONS===================#
@@ -40,6 +41,24 @@ def create_disc (N,const,Rmin,Rmax):
             R[i] = R[i-1]*const
             
     return R
+
+def calc_m_dot(R, timeSteps):
+    '''
+    Calculates the local small mass accretion rate for all radius and time
+    returns a 2 dimensional (len(R), timesteps) size ndarray
+    inputs:
+        R = array of radii
+        timesteps = Number of equal-spaced time steps to generate 
+    '''
+    
+    m_dot = np.ones((len(R), timeSteps))
+
+    for i in range(len(R)):
+        y = generate_power_law(timeSteps, 1.0, 1.0)
+        m_dot[i] = y * m_dot[i]
+        
+    return m_dot
+
 
 def M_dot(R,t,M_0_start):
     '''
@@ -70,7 +89,8 @@ def M_dot(R,t,M_0_start):
     #Creating Arrays to store values of M(r), M_0(r) and m(r)
     M_dot_local = np.zeros(len(R))
     M_dot_local[len(R)-1] = M_0_start
-    m_dot = np.ones(len(R)) * 0.1*np.sin(2 * np.pi * (viscous_frequency(R))* t)
+    #m_dot = np.ones(len(R)) * 0.1*np.sin(2 * np.pi * (viscous_frequency(R))* t)
+    #if you want to switch back to sinosoid, remove 2nd [t] term on m_dots
     
     #print 'mdot', m_dot
     
@@ -80,9 +100,9 @@ def M_dot(R,t,M_0_start):
     m_store = 1
 
     for i in range(len(R)-1,-1,-1):
-        m_store=m_store*(m_dot[i]+1)
+        m_store=m_store*(m_dot[i][t]+1)
         if i==(len(R)-1):
-            M_dot[i]=M_dot_local[i]*(m_dot[i]+1)
+            M_dot[i]=M_dot_local[i]*(m_dot[i][t]+1)
         else:
             M_dot[i]=M_dot[i+1]*m_store
     return M_dot
@@ -179,7 +199,7 @@ def calc_area(R):
 #================================================#
 
 
-H_R_=0.01 # H/R (height of the disc over total radius)
+H_R_=1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
 M_0_start = 10.0
 VERY_BIG = 1E50
 
@@ -190,7 +210,7 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 11
+N = 10
 const = 1.01
 Rmin = 6.0
 Rmax = 10.0
@@ -201,9 +221,15 @@ Rmax = 10.0
 #================================================#
 time0 = time()
 
+
 R = create_disc(N, const, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
 alpha = calc_alpha(R) 
+
+tMax = int(max(viscous_timescale(R)))
+m_dot = calc_m_dot(R,tMax)
+
+
 
 print '-------------------------------------'
 print 'Radii:', R
@@ -218,53 +244,58 @@ M=M_dot(R, 1, M_0_start)
 
 
 
-y=np.array([])
-T=np.array([])
 
-tMax = 10*int(max(viscous_timescale(R)))
-
-
-timeSteps = 1000
-
-
-for t in np.arange(0,tMax,tMax/timeSteps):
-    y = np.append(y,M_dot(R, t, M_0_start)[0])
-    T = np.append(T,t)
+y=np.empty(tMax)
+T=np.empty(tMax)
+for t in np.arange(0,tMax,1):
+    y[t] = M_dot(R, t, M_0_start)[0]
+    T[t] = t
     
-    percents = round(100.0 * t / float(tMax), 1)
-    if percents%10.0==0:
-        print percents, '%', '| t =', t, '/', tMax
+    percents = round(100.0 * t / float(tMax), 3)
+    if percents%10.00==0:
+       print percents, '%', '| t =', t, '/', tMax
     
-
 plt.figure(1)    
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
-plt.plot(T,y)
+plt.plot(T,y , linewidth=0.25)
 
 
 
-a = np.array_split(T, len(T)/(timeSteps/10))
-b = np.array_split(y, len(y)/(timeSteps/10))
+
+
+a = np.array_split(T, len(T)/(tMax/10))
+count_bin = np.array_split(y, len(y)/(tMax/10))
 
 plt.figure(2) 
-plt.xlabel('count rate')
+plt.xlabel('average count rate')
 plt.ylabel('rms')   
 
 
+b_avg = np.empty(len(a))
+b_rms = np.empty(len(a))
+
 for i in range(len(a)):
-    a_avg = np.average(a[i])
-    b_avg = np.average(b[i])
-    print 'bavg', b_avg
+    b_avg[i] = np.average(count_bin[i])
+    #print 'bavg', b_avg
     
-    a_rms = np.sqrt(np.average(a[i] ** 2))
-    b_rms = np.sqrt(np.average(b[i] ** 2))
-    print 'brms', b_rms
-    
-    plt.scatter(b_avg,b_rms)
+    b_rms[i] = np.sqrt(np.average(count_bin[i] ** 2))
+    #print 'brms', b_rms
 
 
 
+fit = np.polyfit(b_avg,b_rms,1)
+fit_fn = np.poly1d(fit) 
+plt.plot(b_avg,fit_fn(b_avg), color='r')
 
+plt.scatter(b_avg,b_rms, marker='x')
+slope, intercept, r_value, p_value, std_err = stats.linregress(b_avg,b_rms)
+print 'slope, intercept, r_value, p_value, std_err'
+print slope, intercept, r_value, p_value, std_err
+
+
+
+m_dot = calc_m_dot(R,tMax)
 
 
 
