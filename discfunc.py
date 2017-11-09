@@ -15,6 +15,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from time import time #remove once finished
 from astroML.time_series.generate import generate_power_law
+from astroML.fourier import PSD_continuous
 from scipy import stats
 
 #================================================#
@@ -50,6 +51,9 @@ def calc_m_dot(R, timeSteps):
     inputs:
         R = array of radii
         timesteps = Number of equal-spaced time steps to generate 
+    
+    Uses Timmer and Koenig method from AstroML
+    Third value in generate_power law is the value of beta
     '''
     
     m_dot = np.ones((len(R), timeSteps))
@@ -107,6 +111,20 @@ def M_dot(R,t,M_0_start):
         else:
             M_dot[i]=M_dot[i+1]*m_store
     return M_dot
+
+def dampen(M_dot, D):
+    '''
+    Dampens an input of M_dot at each radii by a factor
+    exp(-D) based as done in Arevalo and Uttley 2005
+    
+    inputs:
+        M_dot = list of mass accretion rates at each radius
+        D = Damping coefficient 
+    '''
+    
+    fourier = np.fft.fft(M_dot) * np.exp(-D)
+    M_dot_new = np.fft.ifft(fourier)
+    return M_dot_new
     
 def calc_alpha (R):
     alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
@@ -222,7 +240,12 @@ time0 = time()
 R = create_disc(N, const, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
 alpha = calc_alpha(R)
+
 tMax = int(max(viscous_timescale(R)))
+if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
+    tMax = tMax + 1
+
+
 m_dot = calc_m_dot(R,tMax)
 
 
@@ -240,11 +263,15 @@ print 'M_dot: ', M_dot(R, 1, M_0_start)
 print '============================================='
 print ''
 print '#############################################'
+
+
+
 ############-Count Rate vs Time-############
 
 y=np.empty(tMax)
 T=np.empty(tMax)
 for t in np.arange(0,tMax,1):
+    #y[t] = dampen(M_dot(R, t, M_0_start), 0.5)[0]    #Damped
     y[t] = M_dot(R, t, M_0_start)[0]
     T[t] = t
     
@@ -252,7 +279,8 @@ for t in np.arange(0,tMax,1):
     if percents%10.00==0:
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
     
-plt.figure(1)    
+plt.figure(1, figsize=(7, 4))  
+plt.title('Light Curve for disk of %d radii' %N)  
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
 plt.plot(T,y , linewidth=0.25)
@@ -277,7 +305,7 @@ for i in range(len(a)):
     #print 'brms:', b_rms
 
 
-plt.figure(2, figsize=(6, 6)) 
+plt.figure(2, figsize=(7, 7)) 
 plt.xlabel('average count rate')
 plt.ylabel('rms') 
 fit = np.polyfit(b_avg,b_rms,1)
@@ -290,16 +318,26 @@ plt.scatter(b_avg,b_rms, marker='x')
 
 
 slope, intercept, r_value, p_value, std_err = stats.linregress(b_avg,b_rms)
-print '========REGRESSION STATS========'
+print '========REGRESSION STATS FOR RMS========'
 print'slope:', slope
 print 'intercept:', intercept
 print 'r_value:', r_value
 print 'p_value:', p_value
 print 'std_err:', std_err
-print '================================'
+print '========================================'
 
 
+############ PSD ############
 
+freq, PSD = PSD_continuous(T,y)
+
+plt.figure(3, figsize=(7, 4))
+plt.title('PSD')
+plt.xlabel('Frequency')
+plt.ylabel('Power')
+plt.loglog(freq,PSD, linewidth=0.5, color='black')
+
+############################
 
 
 '''
@@ -312,12 +350,14 @@ A = calc_area(R)
 flux = A*B
 R_new = np.delete(R,-1)
 
-plt.figure(3)
+plt.figure(4)
 plt.title('Radius vs flux for frequency = 1 in loglog')
 plt.xlabel('Radius')
 plt.ylabel('Flux')
 plt.loglog(R_new,flux)
 
+fourier = np.fft.fft(y)
+freq = 1/T
 
 
 
@@ -334,7 +374,7 @@ for f in F:
         flux.append(A[i] * Bnew[i])
     flux_total.append(sum (flux) )
 
-plt.figure(4)
+plt.figure(5)
 F_array = np.asarray(F)
 plt.title('Frequency vs total flux for varying frequencies in loglog')
 plt.xlabel('Frequency')
@@ -351,12 +391,14 @@ for i in range (len(R)-1):
     em_flux.append(A[i]*em[i])
     R_new.append(R[i])
 
-plt.figure(5)
+plt.figure(6)
 plt.title('Radius vs em flux for frequency = 1 in loglog')
 plt.xlabel('Radius')
 plt.ylabel('em Flux')
-plt.plot(R_new,em_flux)
+plt.loglog(R_new,em_flux)
+
 '''
+
 
 time1 = time()
 print 'Time taken', time1-time0
