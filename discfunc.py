@@ -10,7 +10,7 @@ Authors: Vysakh Salil, Norman Khan
 Contains the main functions used for the accretion disk model 
 Heavily based on the model proposed by P Arevalo P Uttley 2005 
 """
-#Imports
+
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time #remove once finished
@@ -20,6 +20,7 @@ from scipy import stats
 #================================================#
 #====================FUNCTIONS===================#
 #================================================#
+
 def create_disc (N,const,Rmin,Rmax):
     
     '''
@@ -198,12 +199,9 @@ def calc_area(R):
 #====================CONSTANTS===================#
 #================================================#
 
-
 H_R_=1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
-M_0_start = 10.0
+M_0_start = 1.0 #Starting M_0 at outermost radius
 VERY_BIG = 1E50
-
-
 
 
 #Disk constants
@@ -221,29 +219,28 @@ Rmax = 10.0
 #================================================#
 time0 = time()
 
-
 R = create_disc(N, const, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
-alpha = calc_alpha(R) 
-
+alpha = calc_alpha(R)
 tMax = int(max(viscous_timescale(R)))
 m_dot = calc_m_dot(R,tMax)
 
 
 
-print '-------------------------------------'
+print '===============DISK PARAMETERS==============='
+np.set_printoptions(precision = 2, linewidth = 100)
+print 'Number of radii:', N
 print 'Radii:', R
 print 'alphas:', alpha
 print 'visc_timescale:', viscous_timescale(R)
+np.set_printoptions(precision = 4, linewidth = 100)
 print 'visc_freq: ', viscous_frequency(R)
 print 'visc_vel:', viscous_velocity(R)
 print 'M_dot: ', M_dot(R, 1, M_0_start)
-print '-------------------------------------'
-
-M=M_dot(R, 1, M_0_start)
-
-
-
+print '============================================='
+print ''
+print '#############################################'
+############-Count Rate vs Time-############
 
 y=np.empty(tMax)
 T=np.empty(tMax)
@@ -251,25 +248,23 @@ for t in np.arange(0,tMax,1):
     y[t] = M_dot(R, t, M_0_start)[0]
     T[t] = t
     
-    percents = round(100.0 * t / float(tMax), 3)
+    percents = round(100.0 * t / float(tMax), 2)
     if percents%10.00==0:
-       print percents, '%', '| t =', t, '/', tMax
+       print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
     
 plt.figure(1)    
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
 plt.plot(T,y , linewidth=0.25)
+print '#############################################'
+print ''
 
 
 
-
+############-RMS vs Average Count Rate-############
 
 a = np.array_split(T, len(T)/(tMax/10))
 count_bin = np.array_split(y, len(y)/(tMax/10))
-
-plt.figure(2) 
-plt.xlabel('average count rate')
-plt.ylabel('rms')   
 
 
 b_avg = np.empty(len(a))
@@ -277,34 +272,37 @@ b_rms = np.empty(len(a))
 
 for i in range(len(a)):
     b_avg[i] = np.average(count_bin[i])
-    #print 'bavg', b_avg
-    
+    #print 'bavg:', b_avg
     b_rms[i] = np.sqrt(np.average(count_bin[i] ** 2))
-    #print 'brms', b_rms
+    #print 'brms:', b_rms
 
 
-
+plt.figure(2, figsize=(6, 6)) 
+plt.xlabel('average count rate')
+plt.ylabel('rms') 
 fit = np.polyfit(b_avg,b_rms,1)
 fit_fn = np.poly1d(fit) 
 plt.plot(b_avg,fit_fn(b_avg), color='r')
 
+
+
 plt.scatter(b_avg,b_rms, marker='x')
+
+
 slope, intercept, r_value, p_value, std_err = stats.linregress(b_avg,b_rms)
-print 'slope, intercept, r_value, p_value, std_err'
-print slope, intercept, r_value, p_value, std_err
-
-
-
-m_dot = calc_m_dot(R,tMax)
-
-
+print '========REGRESSION STATS========'
+print'slope:', slope
+print 'intercept:', intercept
+print 'r_value:', r_value
+print 'p_value:', p_value
+print 'std_err:', std_err
+print '================================'
 
 
 
 
 
 '''
-
 #------------------------------------
 #Flux vs radius
 B = B_nu(R, 1)
@@ -314,7 +312,7 @@ A = calc_area(R)
 flux = A*B
 R_new = np.delete(R,-1)
 
-plt.figure(2)
+plt.figure(3)
 plt.title('Radius vs flux for frequency = 1 in loglog')
 plt.xlabel('Radius')
 plt.ylabel('Flux')
@@ -336,7 +334,7 @@ for f in F:
         flux.append(A[i] * Bnew[i])
     flux_total.append(sum (flux) )
 
-plt.figure(3)
+plt.figure(4)
 F_array = np.asarray(F)
 plt.title('Frequency vs total flux for varying frequencies in loglog')
 plt.xlabel('Frequency')
@@ -358,7 +356,7 @@ plt.title('Radius vs em flux for frequency = 1 in loglog')
 plt.xlabel('Radius')
 plt.ylabel('em Flux')
 plt.plot(R_new,em_flux)
-
 '''
+
 time1 = time()
 print 'Time taken', time1-time0
