@@ -1,0 +1,3 @@
+Replace Power Law with lorenzian in Timmer and Koenig
+
+Google: Fourier frequency

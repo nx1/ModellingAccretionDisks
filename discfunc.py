@@ -18,6 +18,7 @@ from astroML.time_series.generate import generate_power_law
 from astroML.fourier import PSD_continuous
 from scipy import stats
 
+
 #================================================#
 #====================FUNCTIONS===================#
 #================================================#
@@ -43,6 +44,18 @@ def create_disc (N,const,Rmin,Rmax):
             R[i] = R[i-1]*const
             
     return R
+
+
+
+def Lorentzian(T, Q):
+    f = 1./T
+    fVisc = viscous_frequency(R)
+    #for i in range(len(fVisc)):
+    S = (1./np.pi * (Q/2.)) * ( (Q/2)**2 / (f - fVisc[0])**2 + (Q/2)**2)
+        
+    return S
+        
+
 
 def calc_m_dot(R, timeSteps):
     '''
@@ -221,7 +234,6 @@ H_R_=1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
 M_0_start = 1.0 #Starting M_0 at outermost radius
 VERY_BIG = 1E50
 
-
 #Disk constants
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
@@ -247,7 +259,6 @@ if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
 
 
 m_dot = calc_m_dot(R,tMax)
-
 
 
 print '===============DISK PARAMETERS==============='
@@ -336,6 +347,12 @@ plt.title('PSD')
 plt.xlabel('Frequency')
 plt.ylabel('Power')
 plt.loglog(freq,PSD, linewidth=0.5, color='black')
+
+viscfreq = viscous_frequency(R)
+
+for i in viscfreq:
+    plt.axvline(x = i, linewidth = 0.5)
+    
 
 ############################
 
