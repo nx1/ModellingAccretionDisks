@@ -46,40 +46,34 @@ def create_disc (N,const,Rmin,Rmax):
     return R
 
 
-
 def Lorentzian(T, Q):
-    fVisc = viscous_frequency(R)
-    f = np.arange(0, 1.2 * max(fVisc), max(fVisc)/len(T))
-    print 'length of T', len(T)
-    print 'length of frequency', len(f)
+    '''
+    Calculates Lorentzian curves at each viscous frequency and sums them to
+    create an psudo PSD. Useful for explaination.
     
+    inputs:
+        T = Array of time series, used to calculate frequency range
+        Q = FWHM of the Lorentzians
+    '''
+    
+    
+    fVisc = viscous_frequency(R)
+    f = np.arange(0, max(fVisc), max(fVisc)/len(T))
     S = np.empty(len(f))
-    j=5
+    
+    #j = 5   #Counter for plotting individual Lorentzians
     for i in range(len(fVisc)):
-        
-        
-        S_store = (( (Q/2.)**2 / (f - fVisc[i])**2 + (Q/2.)**2))
+        S_store = (Q/2.)**2 / ((f - fVisc[i])**2 + (Q/2.)**2) 
         S_store_normalized = S_store * 1./max(S_store)
         
-        
-        plt.figure(j)
-        plt.title(j)
-        plt.semilogy(f, S_store_normalized )
-        j=j+1
-        
-        
-        print 'f', f
-        print 'S(f) max', max(S_store_normalized), 'for visc freq:', fVisc[i]
-        print 'S(f)', S_store_normalized
-        print '-=---------=-=-=-=-=-=-=-=-=-=-=-'
-        #S = S + S_store * 1./max(S_store)
+        plt.figure(4)
+        plt.plot(f, S_store_normalized)
+        #j = j + 1
         
         S = S + S_store_normalized
-        
-        
+        #print 'S', S
     return S, f
-        
-
+   
 
 def calc_m_dot(R, timeSteps):
     '''
@@ -94,9 +88,12 @@ def calc_m_dot(R, timeSteps):
     '''
     
     m_dot = np.ones((len(R), timeSteps))
-
+    
+    
+    fVisc = viscous_frequency(R)
+    
     for i in range(len(R)):
-        y = generate_power_law(timeSteps, 1.0, 1.0)
+        y = generate_power_law(timeSteps, 1.0, 1.0, Q, fVisc[i])
         m_dot[i] = y * m_dot[i]
         
     return m_dot
@@ -148,6 +145,7 @@ def M_dot(R,t,M_0_start):
         else:
             M_dot[i]=M_dot[i+1]*m_store
     return M_dot
+
 
 def dampen(M_dot, D):
     '''
@@ -262,10 +260,11 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 10
-const = 1.01
-Rmin = 6.0
+N = 10      #Number of Radii
+const = 1.4 #Constant of proportionality between neighbouring raddi radiuses.
+Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
+
 
 
 #================================================#
@@ -276,6 +275,9 @@ time0 = time()
 R = create_disc(N, const, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
 alpha = calc_alpha(R)
+Q = 0.025*max(viscous_frequency(R))    #FWHM of lorentzians
+
+
 
 tMax = int(max(viscous_timescale(R)))
 if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
@@ -315,6 +317,12 @@ for t in np.arange(0,tMax,1):
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
     
 plt.figure(1, figsize=(7, 4))  
+
+visctime = viscous_timescale(R)
+
+for i in visctime:
+    plt.axvline(x = i, linewidth = 0.5)
+
 plt.title('Light Curve for disk of %d radii' %N)  
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')        
@@ -347,10 +355,7 @@ fit = np.polyfit(b_avg,b_rms,1)
 fit_fn = np.poly1d(fit) 
 plt.plot(b_avg,fit_fn(b_avg), color='r')
 
-
-
 plt.scatter(b_avg,b_rms, marker='x')
-
 
 slope, intercept, r_value, p_value, std_err = stats.linregress(b_avg,b_rms)
 print '========REGRESSION STATS FOR RMS========'
@@ -360,6 +365,7 @@ print 'r_value:', r_value
 print 'p_value:', p_value
 print 'std_err:', std_err
 print '========================================'
+
 
 
 ############ PSD ############
@@ -377,22 +383,19 @@ viscfreq = viscous_frequency(R)
 for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.5)
     
-
 ############################
 
 
 
+##########PSD from Lorentzian combination###########
 
-
-S_f, Freq = Lorentzian(T, 0.5)
+S_f, Freq = Lorentzian(T, Q)
 
 plt.figure(4)
-plt.title('PSD')
+plt.title('PSD Lorentzian combination')
 plt.plot(Freq, S_f)
 for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.5, color = 'r')
-    
-
 
 
 

@@ -2,7 +2,7 @@ import numpy as np
 from ..utils import check_random_state
 
 
-def generate_power_law(N, dt, beta, generate_complex=False, random_state=None):
+def generate_power_law(N, dt, beta, Q, fVisc, generate_complex=False, random_state=None):
     """Generate a power-law light curve
 
     This uses the method from Timmer & Koenig [1]_
@@ -15,6 +15,10 @@ def generate_power_law(N, dt, beta, generate_complex=False, random_state=None):
         Spacing between time-steps
     beta : float
         Power-law index.  The spectrum will be (1 / f)^beta
+    Q: float
+        FWHM of Lorentzian peak
+    fVisc: float
+        Viscous frequency at given radius
     generate_complex : boolean (optional)
         if True, generate a complex time series rather than a real time series
     random_state : None, int, or np.random.RandomState instance (optional)
@@ -46,7 +50,8 @@ def generate_power_law(N, dt, beta, generate_complex=False, random_state=None):
     x_fft.real[1:] = random_state.normal(0, 1, len(omega) - 1)
     x_fft.imag[1:] = random_state.normal(0, 1, len(omega) - 1)
 
-    x_fft[1:] *= (1. / omega[1:]) ** (0.5 * beta)
+    #Square root of Lorentzian with peak at fVisc
+    x_fft[1:] *= ( (Q/2.)**2 / ((omega[1:] - fVisc)**2 + (Q/2.)**2) )**0.5 
     x_fft[1:] *= (1. / np.sqrt(2))
 
     # by symmetry, the Nyquist frequency is real if x is real
