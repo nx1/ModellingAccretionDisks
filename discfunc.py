@@ -48,12 +48,36 @@ def create_disc (N,const,Rmin,Rmax):
 
 
 def Lorentzian(T, Q):
-    f = 1./T
     fVisc = viscous_frequency(R)
-    #for i in range(len(fVisc)):
-    S = (1./np.pi * (Q/2.)) * ( (Q/2)**2 / (f - fVisc[0])**2 + (Q/2)**2)
+    f = np.arange(0, 1.2 * max(fVisc), max(fVisc)/len(T))
+    print 'length of T', len(T)
+    print 'length of frequency', len(f)
+    
+    S = np.empty(len(f))
+    j=5
+    for i in range(len(fVisc)):
         
-    return S
+        
+        S_store = (( (Q/2.)**2 / (f - fVisc[i])**2 + (Q/2.)**2))
+        S_store_normalized = S_store * 1./max(S_store)
+        
+        
+        plt.figure(j)
+        plt.title(j)
+        plt.semilogy(f, S_store_normalized )
+        j=j+1
+        
+        
+        print 'f', f
+        print 'S(f) max', max(S_store_normalized), 'for visc freq:', fVisc[i]
+        print 'S(f)', S_store_normalized
+        print '-=---------=-=-=-=-=-=-=-=-=-=-=-'
+        #S = S + S_store * 1./max(S_store)
+        
+        S = S + S_store_normalized
+        
+        
+    return S, f
         
 
 
@@ -355,6 +379,22 @@ for i in viscfreq:
     
 
 ############################
+
+
+
+
+
+S_f, Freq = Lorentzian(T, 0.5)
+
+plt.figure(4)
+plt.title('PSD')
+plt.plot(Freq, S_f)
+for i in viscfreq:
+    plt.axvline(x = i, linewidth = 0.5, color = 'r')
+    
+
+
+
 
 
 '''
