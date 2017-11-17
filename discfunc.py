@@ -93,6 +93,7 @@ def calc_m_dot(R, timeSteps):
     fVisc = viscous_frequency(R)
     
     for i in range(len(R)):
+        Q = 0.025*viscous_frequency(R)[i]    #FWHM of lorentzians
         y = generate_power_law(timeSteps, 1.0, 1.0, Q, fVisc[i])
         m_dot[i] = y * m_dot[i]
         
@@ -260,7 +261,7 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 10      #Number of Radii
+N = 3      #Number of Radii
 const = 1.4 #Constant of proportionality between neighbouring raddi radiuses.
 Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
@@ -275,11 +276,11 @@ time0 = time()
 R = create_disc(N, const, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
 alpha = calc_alpha(R)
-Q = 0.025*max(viscous_frequency(R))    #FWHM of lorentzians
 
 
 
-tMax = int(max(viscous_timescale(R)))
+
+tMax = 30*int(max(viscous_timescale(R)))
 if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
     tMax = tMax + 1
 
