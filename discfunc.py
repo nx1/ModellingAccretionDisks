@@ -44,38 +44,9 @@ def create_disc (N,const,Rmin,Rmax):
             R[i] = R[i-1]*const
             
     return R
-
-
-def Lorentzian(T, Q):
-    '''
-    Calculates Lorentzian curves at each viscous frequency and sums them to
-    create an psudo PSD. Useful for explaination.
-    
-    inputs:
-        T = Array of time series, used to calculate frequency range
-        Q = FWHM of the Lorentzians
-    '''
-    
-    
-    fVisc = viscous_frequency(R)
-    f = np.arange(0, max(fVisc), max(fVisc)/len(T))
-    S = np.empty(len(f))
-    
-    #j = 5   #Counter for plotting individual Lorentzians
-    for i in range(len(fVisc)):
-        S_store = (Q/2.)**2 / ((f - fVisc[i])**2 + (Q/2.)**2) 
-        S_store_normalized = S_store * 1./max(S_store)
-        
-        plt.figure(4)
-        plt.plot(f, S_store_normalized)
-        #j = j + 1
-        
-        S = S + S_store_normalized
-        #print 'S', S
-    return S, f
    
 
-def calc_m_dot(R, timeSteps):
+def calc_m_dot(R, timeSteps, Q):
     '''
     Calculates the local small mass accretion rate for all radius and time
     returns a 2 dimensional (len(R), timesteps) size ndarray
@@ -93,8 +64,8 @@ def calc_m_dot(R, timeSteps):
     fVisc = viscous_frequency(R)
     
     for i in range(len(R)):
-        Q = 0.025*viscous_frequency(R)[i]    #FWHM of lorentzians
-        y = generate_power_law(timeSteps, 1.0, 1.0, Q, fVisc[i])
+            #FWHM of lorentzians
+        y = generate_power_law(timeSteps, 1.0, 1.0, Q[i], fVisc[i])
         m_dot[i] = y * m_dot[i]
         
     return m_dot
@@ -249,6 +220,33 @@ def calc_area(R):
     '''
     A = np.array([np.pi * (R[i+1] ** 2 - R[i] ** 2) for i in range (len(R) - 1)])
     return A
+
+def Lorentzian(T, Q):
+    '''
+    Calculates Lorentzian curves at each viscous frequency and sums them to
+    create an psudo PSD. Useful for explaination.
+    
+    inputs:
+        T = Array of time series, used to calculate frequency range
+        Q = FWHM of the Lorentzians
+    '''
+    
+    fVisc = viscous_frequency(R)
+    f = np.arange(0, 1.2*max(fVisc), 1.2*max(fVisc)/len(T))
+    S = np.empty(len(f))
+    
+    #j = 5   #Counter for plotting individual Lorentzians
+    for i in range(len(fVisc)):
+        S_store = (Q[i]/2.)**2 / ((f - fVisc[i])**2 + (Q[i]/2.)**2) 
+        S_store_normalized = S_store * 1./max(S_store)
+        
+        plt.figure(4)
+        plt.plot(f, S_store_normalized)
+        #j = j + 1
+        S = S + S_store_normalized
+        #print 'S', S
+    return S, f
+
 #================================================#
 #====================CONSTANTS===================#
 #================================================#
@@ -261,31 +259,30 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 3      #Number of Radii
+N = 10      #Number of Radii
 const = 1.4 #Constant of proportionality between neighbouring raddi radiuses.
 Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
 
 
+#==================Variables=====================#
+
+R = create_disc(N, const, Rmin, Rmax)
+#alpha = 0.1*np.ones(len(R))
+alpha = calc_alpha(R)
+Q = 0.025*viscous_frequency(R)
+tMax = int(max(viscous_timescale(R)))
 
 #================================================#
 #=======================MAIN=====================#
 #================================================#
 time0 = time()
 
-R = create_disc(N, const, Rmin, Rmax)
-#alpha = 0.1*np.ones(len(R))
-alpha = calc_alpha(R)
 
-
-
-
-tMax = 30*int(max(viscous_timescale(R)))
 if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
     tMax = tMax + 1
-
-
-m_dot = calc_m_dot(R,tMax)
+    
+m_dot = calc_m_dot(R,tMax, Q)
 
 
 print '===============DISK PARAMETERS==============='
@@ -313,8 +310,8 @@ for t in np.arange(0,tMax,1):
     y[t] = M_dot(R, t, M_0_start)[0]
     T[t] = t
     
-    percents = round(100.0 * t / float(tMax), 2)
-    if percents%10.00==0:
+    percents = round(100.0 * t / float(tMax), 3)
+    if percents % 10.00==0:
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
     
 plt.figure(1, figsize=(7, 4))  
