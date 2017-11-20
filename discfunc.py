@@ -75,7 +75,6 @@ def calc_m_dot(R, timeSteps, Q):
         m_dot[i] = y 
         X = sigma_var / np.std(m_dot[i])
         m_dot[i] = X * m_dot[i]
-        
     return m_dot
 
 
@@ -259,7 +258,7 @@ def Lorentzian(T, Q):
 #====================CONSTANTS===================#
 #================================================#
 
-H_R_=1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
+H_R_= 1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
 M_0_start = 1.0 #Starting M_0 at outermost radius
 VERY_BIG = 1E50
 
@@ -267,7 +266,7 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 20      #Number of Radii
+N = 10      #Number of Radii
 const = 1.4 #Constant of proportionality between neighbouring raddi radiuses.
 Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
@@ -289,9 +288,9 @@ time0 = time()
 
 if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
     tMax = tMax + 1
-    
+print 'calculating m_dots'
 m_dot = calc_m_dot(R,tMax, Q)
-
+print 'DONE in: ', time() - time0
 
 
 
