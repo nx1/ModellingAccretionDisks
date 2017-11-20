@@ -271,28 +271,29 @@ const = 1.4 #Constant of proportionality between neighbouring raddi radiuses.
 Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
 
+Q_factor = 0.025    #Value of FWHM of each Lorentzian
+tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
+
 
 #==================Variables=====================#
-
 R = create_disc(N, const, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
-alpha = calc_alpha(R)
-Q = 0.025*viscous_frequency(R)
-tMax = int(max(viscous_timescale(R)))
-
+alpha = calc_alpha(R)           #Caclulates value of alpha at each radius
+Q = Q_factor * viscous_frequency(R)  #FWHM of Lorentzians
+tMax = int(tMax_factor * max(viscous_timescale(R)))
+if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
+    tMax = tMax + 1
+    
 #================================================#
 #=======================MAIN=====================#
 #================================================#
 time0 = time()
 
 
-if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
-    tMax = tMax + 1
-print 'calculating m_dots'
+
+print '----------calculating m_dots------------'
 m_dot = calc_m_dot(R,tMax, Q)
 print 'DONE in: ', time() - time0
-
-
 
 print '===============DISK PARAMETERS==============='
 np.set_printoptions(precision = 2, linewidth = 100)
@@ -338,7 +339,7 @@ print '#############################################'
 print ''
 
 
-
+'''
 ############-RMS vs Average Count Rate-############
 
 a = np.array_split(T, len(T)/(tMax/10))
@@ -372,7 +373,7 @@ print 'r_value:', r_value
 print 'p_value:', p_value
 print 'std_err:', std_err
 print '========================================'
-
+'''
 
 
 ############ PSD ############
@@ -398,7 +399,7 @@ for i in viscfreq:
 
 
 
-
+'''
 ##########PSD from Lorentzian combination###########
 
 S_f, Freq = Lorentzian(T, Q)
@@ -412,7 +413,7 @@ for i in viscfreq:
 
 
 
-'''
+
 #------------------------------------
 #Flux vs radius
 B = B_nu(R, 1)
