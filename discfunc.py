@@ -18,7 +18,6 @@ from astroML.time_series.generate import generate_power_law
 from astroML.fourier import PSD_continuous
 from scipy import stats
 
-
 #================================================#
 #====================FUNCTIONS===================#
 #================================================#
@@ -58,23 +57,24 @@ def calc_m_dot(R, timeSteps, Q):
         R = array of radii
         timesteps = Number of equal-spaced time steps to generate 
     
-    Uses Timmer and Koenig method from AstroML
-    Third value in generate_power law is the value of beta (UNUSED)
+    Uses modifed Timmer and Koenig method from AstroML with a Lorentzian
+    distribution peaked at the local viscous frequency for the PSD. 
     '''
-    F_var = 0.1
-    sigma_var = np.sqrt(F_var**2 / N)
+    F_var = 0.1     #Value of F_var used for normalisation eg 0.1 = 10%
+    sigma_var = np.sqrt(F_var**2 / N)   #used to normalise over all annuli
     
     m_dot = np.empty((len(R), timeSteps))
-    
     
     fVisc = viscous_frequency(R)
     
     for i in range(len(R)):
-            #FWHM of lorentzians
-        y = generate_power_law(timeSteps, 1.0, 1.0, Q[i], fVisc[i])
-        m_dot[i] = y 
+        m_dot[i] = generate_power_law(timeSteps, 1.0, Q[i], fVisc[i])
         X = sigma_var / np.std(m_dot[i])
         m_dot[i] = X * m_dot[i]
+        
+        percents = round(100.0 * i / float(len(R)), 1)
+        if percents % 10.00==0:
+            print percents, '% | calculating m_dot'
     return m_dot
 
 
@@ -290,12 +290,14 @@ if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
 time0 = time()
 
 
-
-print '----------calculating m_dots------------'
+print '--------- Calculating m_dot (small) ---------'
+print 'radii:', len(R), 'tMax:', tMax
 m_dot = calc_m_dot(R,tMax, Q)
 print 'DONE in: ', time() - time0
+print '---------------------------------------------'   
+print ''                    
 
-print '===============DISK PARAMETERS==============='
+print '============== DISK PARAMETERS =============='
 np.set_printoptions(precision = 2, linewidth = 100)
 print 'Number of radii:', N
 print 'Radii:', R
@@ -307,9 +309,7 @@ print 'visc_vel:', viscous_velocity(R)
 print 'M_dot: ', M_dot(R, 1, M_0_start)
 print '============================================='
 print ''
-print '#############################################'
-
-
+print '############# CALCULATING M_DOT #############'
 
 ############-Count Rate vs Time-############
 
@@ -339,7 +339,6 @@ print '#############################################'
 print ''
 
 
-'''
 ############-RMS vs Average Count Rate-############
 
 a = np.array_split(T, len(T)/(tMax/10))
@@ -373,7 +372,7 @@ print 'r_value:', r_value
 print 'p_value:', p_value
 print 'std_err:', std_err
 print '========================================'
-'''
+
 
 
 ############ PSD ############

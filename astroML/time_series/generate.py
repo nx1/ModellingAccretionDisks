@@ -1,8 +1,7 @@
 import numpy as np
 from ..utils import check_random_state
 
-
-def generate_power_law(N, dt, beta, Q, fVisc, generate_complex=False, random_state=None):
+def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=None):
     """Generate a power-law light curve
 
     This uses the method from Timmer & Koenig [1]_
@@ -34,18 +33,20 @@ def generate_power_law(N, dt, beta, Q, fVisc, generate_complex=False, random_sta
     .. [1] Timmer, J. & Koenig, M. On Generating Power Law Noise. A&A 300:707
     """
     random_state = check_random_state(random_state)
+    
     dt = float(dt)
     N = int(N)
 
     Npos = int(N / 2)
     Nneg = int((N - 1) / 2)
     domega = (2 * np.pi / dt / N)
-
+    
     if generate_complex:
         omega = domega * np.fft.ifftshift(np.arange(N) - int(N / 2))
     else:
         omega = domega * np.arange(Npos + 1)
 
+    
     x_fft = np.zeros(len(omega), dtype=complex)
     x_fft.real[1:] = random_state.normal(0, 1, len(omega) - 1)
     x_fft.imag[1:] = random_state.normal(0, 1, len(omega) - 1)
@@ -53,16 +54,14 @@ def generate_power_law(N, dt, beta, Q, fVisc, generate_complex=False, random_sta
     #Square root of Lorentzian with peak at fVisc
     x_fft[1:] *= ( (Q/2.)**2 / ((omega[1:] - 2.*np.pi*fVisc)**2 + (Q/2.)**2) )**0.5 
     x_fft[1:] *= (1. / np.sqrt(2))
-
+    
     # by symmetry, the Nyquist frequency is real if x is real
     if (not generate_complex) and (N % 2 == 0):
         x_fft.imag[-1] = 0
-
     if generate_complex:
         x = np.fft.ifft(x_fft)
     else:
-        x = np.fft.irfft(x_fft, N)
-
+        x = np.fft.irfft(x_fft, N)  #Slow for Large N
     return x
 
 
