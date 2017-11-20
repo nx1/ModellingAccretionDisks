@@ -50,15 +50,21 @@ def calc_m_dot(R, timeSteps, Q):
     '''
     Calculates the local small mass accretion rate for all radius and time
     returns a 2 dimensional (len(R), timesteps) size ndarray
+    
+    Normalization is done by multiplying the output lightcurve by a factor
+    X = sigma_var / standard deviation of m_dot
+    
     inputs:
         R = array of radii
         timesteps = Number of equal-spaced time steps to generate 
     
     Uses Timmer and Koenig method from AstroML
-    Third value in generate_power law is the value of beta
+    Third value in generate_power law is the value of beta (UNUSED)
     '''
+    F_var = 0.1
+    sigma_var = np.sqrt(F_var**2 / N)
     
-    m_dot = np.ones((len(R), timeSteps))
+    m_dot = np.empty((len(R), timeSteps))
     
     
     fVisc = viscous_frequency(R)
@@ -66,7 +72,9 @@ def calc_m_dot(R, timeSteps, Q):
     for i in range(len(R)):
             #FWHM of lorentzians
         y = generate_power_law(timeSteps, 1.0, 1.0, Q[i], fVisc[i])
-        m_dot[i] = y * m_dot[i]
+        m_dot[i] = y 
+        X = sigma_var / np.std(m_dot[i])
+        m_dot[i] = X * m_dot[i]
         
     return m_dot
 
@@ -259,7 +267,7 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 10      #Number of Radii
+N = 20      #Number of Radii
 const = 1.4 #Constant of proportionality between neighbouring raddi radiuses.
 Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
@@ -283,6 +291,8 @@ if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
     tMax = tMax + 1
     
 m_dot = calc_m_dot(R,tMax, Q)
+
+
 
 
 print '===============DISK PARAMETERS==============='
@@ -382,6 +392,11 @@ for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.5)
     
 ############################
+
+
+
+
+
 
 
 
