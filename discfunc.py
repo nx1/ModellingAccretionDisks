@@ -471,6 +471,6 @@ plt.loglog(R_new,em_flux)
 
 '''
 
-
+plt.show()
 time1 = time()
 print 'Time taken', time1-time0
