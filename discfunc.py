@@ -261,21 +261,21 @@ def Lorentzian(T, Q):
 #====================CONSTANTS===================#
 #================================================#
 
-H_R_= 1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
-M_0_start = 1.0 #Starting M_0 at outermost radius
+#H_R_= 1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
+#M_0_start = 1.0 #Starting M_0 at outermost radius
 VERY_BIG = 1E50
 
 #Disk constants
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 30      #Number of Radii
-const = 1.1 #Constant of proportionality between neighbouring raddi radiuses.
+#N = 30      #Number of Radii
+#const = 1.1 #Constant of proportionality between neighbouring raddi radiuses.
 Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
 
-Q_factor = 0.025    #Value of FWHM of each Lorentzian
-tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
+#Q_factor = 0.025    #Value of FWHM of each Lorentzian
+#tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
 
 
 #==================Variables=====================#
