@@ -35,6 +35,15 @@ for i in range(77):
     
     
     
+    #LC
+    fig.savefig('Plot1.eps', format='eps', dpi=1000, bbox_inches='tight', pad_inches = 0.0)
+    fig.savefig('Plot1.png', format='png', dpi=1000, bbox_inches='tight', pad_inches = 0.0)
+    #RMS
+    fig.savefig('Plot1.eps', format='eps', dpi=1000, bbox_inches='tight', pad_inches = 0.0)
+    fig.savefig('Plot1.png', format='png', dpi=1000, bbox_inches='tight', pad_inches = 0.0)
+    #PSD
+    fig.savefig('Plot1.eps', format='eps', dpi=1000, bbox_inches='tight', pad_inches = 0.0)
+    fig.savefig('Plot1.png', format='png', dpi=1000, bbox_inches='tight', pad_inches = 0.0)
     
     NAME = '%s%s%s%s%s%s.png' % (name0,name1,name2,name3,name4,name5)
     
