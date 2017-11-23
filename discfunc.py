@@ -326,7 +326,7 @@ for t in np.arange(0,tMax,1):
     if percents % 10.00==0:
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
     
-plt.figure(1, figsize=(7, 4))  
+fig1 = plt.figure(1, figsize=(7, 4))  
 
 visctime = viscous_timescale(R)
 
@@ -357,7 +357,7 @@ for i in range(len(a)):
     #print 'brms:', b_rms
 
 
-plt.figure(2, figsize=(7, 7)) 
+fig2 = plt.figure(2, figsize=(7, 7)) 
 plt.xlabel('average count rate')
 plt.ylabel('rms') 
 fit = np.polyfit(b_avg,b_rms,1)
@@ -381,7 +381,7 @@ print '========================================'
 
 freq, PSD = PSD_continuous(T,y)
 
-plt.figure(3, figsize=(7, 4))
+fig3 = plt.figure(3, figsize=(7, 4))
 plt.title('PSD')
 plt.xlabel('Frequency')
 plt.ylabel('Power')
