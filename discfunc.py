@@ -18,6 +18,9 @@ from astroML.time_series.generate import generate_power_law
 from astroML.fourier import PSD_continuous
 from scipy import stats
 
+seed = 5
+#seed = np.random.random()
+np.random.seed(seed)
 #================================================#
 #====================FUNCTIONS===================#
 #================================================#
@@ -266,8 +269,8 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 10      #Number of Radii
-const = 1.4 #Constant of proportionality between neighbouring raddi radiuses.
+N = 30      #Number of Radii
+const = 1.1 #Constant of proportionality between neighbouring raddi radiuses.
 Rmin = 6.0  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -289,9 +292,8 @@ if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
 #================================================#
 time0 = time()
 
-
 print '--------- Calculating m_dot (small) ---------'
-print 'radii:', len(R), 'tMax:', tMax
+print 'radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor
 m_dot = calc_m_dot(R,tMax, Q)
 print 'DONE in: ', time() - time0
 print '---------------------------------------------'   
@@ -320,7 +322,7 @@ for t in np.arange(0,tMax,1):
     y[t] = M_dot(R, t, M_0_start)[0]
     T[t] = t
     
-    percents = round(100.0 * t / float(tMax), 3)
+    percents = round(100.0 * t / float(tMax), 4)
     if percents % 10.00==0:
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
     
@@ -473,4 +475,4 @@ plt.loglog(R_new,em_flux)
 
 plt.show()
 time1 = time()
-print 'Time taken', time1-time0
+print 'Time taken', time1-time0, '| seed:', seed
