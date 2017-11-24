@@ -5,21 +5,25 @@ Created on Fri Nov 24 15:10:16 2017
 
 @author: yv
 """
-import Tkinter as tkinter
+import Tkinter as tk
+from PIL import ImageTk, Image
 
-root = tkinter.Tk()
+#This creates the main window of an application
+window = tk.Tk()
+window.title("Join")
+window.geometry("300x300")
+window.configure(background='grey')
 
-canvas = tkinter.Canvas(root)
-canvas.pack(fill=tkinter.BOTH, expand=1) # expand
+path = "LC/000000.png"
 
-photo = tkinter.PhotoImage(file = '000000.png')
-photo = photo.subsample(3)
-root.geometry("450x450")
-root.update()
+#Creates a Tkinter-compatible photo image, which can be used everywhere Tkinter expects an image object.
+img = ImageTk.PhotoImage(Image.open(path))
 
+#The Label widget is a standard Tkinter widget used to display a text or image on the screen.
+panel = tk.Label(window, image = img)
 
-img = canvas.create_image(10,10,anchor="nw", image=photo)
+#The Pack geometry manager packs widgets in rows or columns.
+panel.pack(side = "bottom", fill = "both", expand = "yes")
 
-#root.after(20000, lambda: canvas.delete(img))
-
-root.mainloop()
+#Start the GUI
+window.mainloop()
