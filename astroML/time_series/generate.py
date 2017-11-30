@@ -1,5 +1,6 @@
 import numpy as np
 from ..utils import check_random_state
+from scipy.fftpack import ifft
 
 def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=None):
     """Generate a power-law light curve
@@ -33,7 +34,6 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
     .. [1] Timmer, J. & Koenig, M. On Generating Power Law Noise. A&A 300:707
     """
     random_state = check_random_state(random_state)
-    
     dt = float(dt)
     N = int(N)
 
@@ -61,7 +61,8 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
     if generate_complex:
         x = np.fft.ifft(x_fft)
     else:
-        x = np.fft.irfft(x_fft, N)  #Slow for Large N
+        x = ifft(x_fft, N)  #Slow for Large N
+        #x = np.fft.ifft(x_fft, N)  #Slow for Large N
     return x
 
 

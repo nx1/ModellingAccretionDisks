@@ -69,10 +69,7 @@ def calc_m_dot(R, timeSteps, Q):
         m_dot[i] = generate_power_law(timeSteps, 1.0, Q[i], fVisc[i])
         X = sigma_var / np.std(m_dot[i])
         m_dot[i] = X * m_dot[i]
-        
-        percents = round(100.0 * i / float(len(R)), 1)
-        if percents % 10.00==0:
-            print percents, '% | calculating m_dot'
+        print 'Calculating m_dot R =', i+1, '/', len(R)
     return m_dot
 
 
