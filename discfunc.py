@@ -19,13 +19,13 @@ from astroML.fourier import PSD_continuous
 from scipy import stats
 
 seed = 5
-#seed = np.random.random()
+#seed = int(100*np.random.random())
 np.random.seed(seed)
 #================================================#
 #====================FUNCTIONS===================#
 #================================================#
 
-def create_disc (N,const,Rmin,Rmax):
+def create_disc (N,Rmin,Rmax):
     
     '''
     Creates a basic disc with constant ratio between radii
@@ -33,18 +33,13 @@ def create_disc (N,const,Rmin,Rmax):
     
     inputs:
         N       = Number of Annuli
-        const   = Constant ratio between consecutive radii
-        Rmax    = Max Radius (CURRENTLY UNUSED)
-        rstart  = Radii of innermost disc
+        Rmin    = Radii of innermost disc
+        Rmax  = Radii of outermost disc
     '''
-    
+    const = np.power(Rmax/Rmin, 1./(N-1))
     R = np.empty(N)
     for i in range(N):
-        if i==0:
-            R[i] = Rmin
-        else:
-            R[i] = R[i-1]*const
-            
+        R[i] = const**i * Rmin   
     return R
    
 
@@ -269,17 +264,16 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 30      #Number of Radii
-const = 1.1 #Constant of proportionality between neighbouring raddi radiuses.
+N = 10      #Number of Radii
 Rmin = 6.0  #Minimum (starting) Radius
-Rmax = 10.0
+Rmax = 100.0
 
 Q_factor = 0.025    #Value of FWHM of each Lorentzian
 tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
 
 
 #==================Variables=====================#
-R = create_disc(N, const, Rmin, Rmax)
+R = create_disc(N, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
 alpha = calc_alpha(R)           #Caclulates value of alpha at each radius
 Q = Q_factor * viscous_frequency(R)  #FWHM of Lorentzians
@@ -330,12 +324,12 @@ fig1 = plt.figure(1, figsize=(7, 4))
 
 visctime = viscous_timescale(R)
 
-for i in visctime:
-    plt.axvline(x = i, linewidth = 0.5)
+for i in visctime:  #Vertical lines at each viscous timescale
+    plt.axvline(x = i, linewidth = 0.5, color='green')
 
 plt.title('Light Curve for disk of %d radii' %N)  
 plt.xlabel('time')
-plt.ylabel('Mass accretion at R[0]')        
+plt.ylabel('Mass accretion at R[0]')     
 plt.plot(T,y , linewidth=0.25)
 print '#############################################'
 print ''
