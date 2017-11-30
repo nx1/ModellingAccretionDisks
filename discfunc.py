@@ -66,10 +66,10 @@ def calc_m_dot(R, timeSteps, Q):
     fVisc = viscous_frequency(R)
     
     for i in range(len(R)):
-        m_dot[i] = generate_power_law(timeSteps, 1.0, Q[i], fVisc[i])
+        print 'Calculating m_dot | R =', i+1, '/', len(R)
+        m_dot[i] = generate_power_law(timeSteps, 0.0001, Q[i], fVisc[i])
         X = sigma_var / np.std(m_dot[i])
         m_dot[i] = X * m_dot[i]
-        print 'Calculating m_dot R =', i+1, '/', len(R)
     return m_dot
 
 
@@ -262,8 +262,8 @@ VERY_BIG = 1E50
 The number of annuli considered is also N = 1000
 '''
 N = 10      #Number of Radii
-Rmin = 6.0  #Minimum (starting) Radius
-Rmax = 100.0
+Rmin = 0.1  #Minimum (starting) Radius
+Rmax = 10.0
 
 Q_factor = 0.025    #Value of FWHM of each Lorentzian
 tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
