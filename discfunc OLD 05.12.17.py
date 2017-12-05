@@ -18,8 +18,8 @@ from astroML.time_series.generate import generate_power_law
 from astroML.fourier import PSD_continuous
 from scipy import stats
 
-#seed = 5
-seed = int(100*np.random.random())
+seed = 5
+#seed = int(100*np.random.random())
 np.random.seed(seed)
 #================================================#
 #====================FUNCTIONS===================#
@@ -73,17 +73,18 @@ def calc_m_dot(R, timeSteps, Q):
     return m_dot
 
 
-def M_dot(R,t,Mdot0):
+def M_dot(R,t,M_0_start):
     '''
     Calculates the mass accretion at a given radii between two annuli
     
     using the equation:
-        M(r) = M_0 * ∏(1+m(r))
+        M(r) = M_0(r) * ∏(1+m(r))
         
     where M(r) is the accretion rate at given radius
     M(r) is refered to as M_dot
     
-    M_0 is the outermost radius accretion rate 
+    M_0(r) the LOCAL accretion rate at given radii
+    M_0(r) is refered to as M_dot_local
     
     m_dot(r,t), the local small variation of mass at each radius
     can be modelled as a sinosoidal variation close to A*sin(2*pi*f*t)?
@@ -94,22 +95,30 @@ def M_dot(R,t,Mdot0):
     inputs:
         R         = Array of the radii
         t         = time
-        Mdot0     = Outermost radius accretion rate
-    
+        M_0_start = Starting outer radius mass accretion rate
+
     '''
+    
+    #Creating Arrays to store values of M(r), M_0(r) and m(r)
+    M_dot_local = np.zeros(len(R))
+    M_dot_local[len(R)-1] = M_0_start
     #m_dot = np.ones(len(R)) * 0.1*np.sin(2 * np.pi * (viscous_frequency(R))* t)
     #if you want to switch back to sinosoid, remove 2nd [t] term on m_dots
+    
+    #print 'mdot', m_dot
+    
+    #multiplied mdot by 0.1 to more accurately reflect that mdot is << 1
+    M_dot = np.zeros(len(R))
+    
+    m_store = 1
 
-    
-    Mdot = np.zeros(len(R))
-    
     for i in range(len(R)-1,-1,-1):
-        #print 'Radius # ', i
+        m_store=m_store*(m_dot[i][t]+1)
         if i==(len(R)-1):
-            Mdot[i]=Mdot0*(1.0 + m_dot[i][t])
+            M_dot[i]=M_dot_local[i]*(m_dot[i][t]+1)
         else:
-            Mdot[i]=Mdot[i+1]*(1.0 + m_dot[i][t])
-    return Mdot
+            M_dot[i]=M_dot[i+1]*m_store
+    return M_dot
 
 
 def dampen(M_dot, D):
@@ -127,8 +136,7 @@ def dampen(M_dot, D):
     return M_dot_new
     
 def calc_alpha (R):
-    #alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
-    alpha = 0.3
+    alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
     return alpha
 
 
@@ -257,7 +265,7 @@ N = 10      #Number of Radii
 Rmin = 0.1  #Minimum (starting) Radius
 Rmax = 10.0
 
-Q_factor = 0.5    #Value of FWHM of each Lorentzian
+Q_factor = 0.025    #Value of FWHM of each Lorentzian
 tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
 
 
@@ -298,14 +306,12 @@ print '############# CALCULATING M_DOT #############'
 
 ############-Count Rate vs Time-############
 
-
 y=np.empty(tMax)
-T=np.arange(tMax)
+T=np.empty(tMax)
 for t in np.arange(0,tMax,1):
     #y[t] = dampen(M_dot(R, t, M_0_start), 0.5)[0]    #Damped
-    #y[t] = M_dot(R, t, M_0_start)[0]
-    
     y[t] = M_dot(R, t, M_0_start)[0]
+    T[t] = t
     
     percents = round(100.0 * t / float(tMax), 4)
     if percents % 10.00==0:
@@ -321,7 +327,7 @@ for i in visctime:  #Vertical lines at each viscous timescale
 plt.title('Light Curve for disk of %d radii' %N)  
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')     
-plt.plot(T,y, linewidth=0.25)
+plt.plot(T,y , linewidth=0.25)
 print '#############################################'
 print ''
 
@@ -345,11 +351,9 @@ for i in range(len(a)):
 fig2 = plt.figure(2, figsize=(7, 7)) 
 plt.xlabel('average count rate')
 plt.ylabel('rms') 
-"""
 fit = np.polyfit(b_avg,b_rms,1)
 fit_fn = np.poly1d(fit) 
 plt.plot(b_avg,fit_fn(b_avg), color='r')
-"""
 
 plt.scatter(b_avg,b_rms, marker='x')
 
@@ -361,6 +365,7 @@ print 'r_value:', r_value
 print 'p_value:', p_value
 print 'std_err:', std_err
 print '========================================'
+
 
 
 ############ PSD ############
@@ -379,12 +384,6 @@ for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.5)
     
 ############################
-
-
-
-
-
-
 
 '''
 ##########PSD from Lorentzian combination###########
