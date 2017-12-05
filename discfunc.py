@@ -253,7 +253,7 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 1000      #Number of Radii
+N = 10      #Number of Radii
 Rmin = 0.1  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -317,7 +317,7 @@ fig1 = plt.figure(1, figsize=(7, 4))
 visctime = viscous_timescale(R)
 
 for i in visctime:  #Vertical lines at each viscous timescale
-    plt.axvline(x = i, linewidth = 0.5, color='green')
+    plt.axvline(x = i, linewidth = 0.25, color='green')
 
 plt.title('Light Curve for disk of %d radii' %N)  
 plt.xlabel('time')
@@ -373,12 +373,12 @@ fig3 = plt.figure(3, figsize=(7, 4))
 plt.title('PSD')
 plt.xlabel('Frequency')
 plt.ylabel('Power')
-plt.loglog(freq,PSD, linewidth=0.5, color='black')
+plt.loglog(freq,PSD, linewidth=0.25, color='black')
 
 viscfreq = viscous_frequency(R)
 
 for i in viscfreq:
-    plt.axvline(x = i, linewidth = 0.5)
+    plt.axvline(x = i, linewidth = 0.25)
     
 ############################
 
@@ -392,12 +392,15 @@ for i in range(N-1):
     R1[i] = R[i+1]-R[i]
     
 
-flux1 = 2. * np.pi * R1 * em1
+flux1 = 2. * np.pi * R[:-1] * R1 * em1
+M_scaled = np.empty((N-1,tMax))  
+for i in range(N-1):
+    M_scaled[i] = flux1[i]/max(flux1) * M[i]
 
 
-
-
-
+fig3 = plt.figure(4, figsize=(7, 4))
+for i in range(N-1):plt.plot(T,np.sum(M_scaled, axis=0))
+plt.plot(T,M[0])
 
 
 
