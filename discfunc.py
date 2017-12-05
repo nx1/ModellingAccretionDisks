@@ -253,7 +253,7 @@ VERY_BIG = 1E50
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 10      #Number of Radii
+N = 1000      #Number of Radii
 Rmin = 0.1  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -299,18 +299,19 @@ print '############# CALCULATING M_DOT #############'
 ############-Count Rate vs Time-############
 
 
-y=np.empty(tMax)
+M=np.empty((tMax,N))
 T=np.arange(tMax)
 for t in np.arange(0,tMax,1):
     #y[t] = dampen(M_dot(R, t, M_0_start), 0.5)[0]    #Damped
     #y[t] = M_dot(R, t, M_0_start)[0]
     
-    y[t] = M_dot(R, t, M_0_start)[0]
+    M[t] = M_dot(R, t, M_0_start)
     
     percents = round(100.0 * t / float(tMax), 4)
     if percents % 10.00==0:
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
-    
+  
+M = np.transpose(M)
 fig1 = plt.figure(1, figsize=(7, 4))  
 
 visctime = viscous_timescale(R)
@@ -321,7 +322,8 @@ for i in visctime:  #Vertical lines at each viscous timescale
 plt.title('Light Curve for disk of %d radii' %N)  
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')     
-plt.plot(T,y, linewidth=0.25)
+for i in range(N): plt.plot(T,M[i], linewidth=0.25, label='r = %d'%i)
+#plt.legend()
 print '#############################################'
 print ''
 
@@ -329,7 +331,7 @@ print ''
 ############-RMS vs Average Count Rate-############
 
 a = np.array_split(T, len(T)/(tMax/10))
-count_bin = np.array_split(y, len(y)/(tMax/10))
+count_bin = np.array_split(M[0], len(M[0])/(tMax/10))
 
 
 b_avg = np.empty(len(a))
@@ -365,7 +367,7 @@ print '========================================'
 
 ############ PSD ############
 
-freq, PSD = PSD_continuous(T,y)
+freq, PSD = PSD_continuous(T,M[0])
 
 fig3 = plt.figure(3, figsize=(7, 4))
 plt.title('PSD')
@@ -379,6 +381,19 @@ for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.5)
     
 ############################
+
+em = emissivity(R)
+
+em1 = np.empty(N-1)
+R1 = np.empty(len(R)-1)
+
+for i in range(N-1):
+    em1[i] = (em[i] + em[i+1]) / 2.
+    R1[i] = R[i+1]-R[i]
+    
+
+flux1 = 2. * np.pi * R1 * em1
+
 
 
 
