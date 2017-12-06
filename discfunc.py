@@ -36,8 +36,9 @@ def create_disc (N,Rmin,Rmax):
         Rmin    = Radii of innermost disc
         Rmax  = Radii of outermost disc
     '''
-    const = np.power(Rmax/Rmin, 1./(N-1))
     R = np.empty(N)
+    const = np.power(Rmax/Rmin, 1./(N-1))
+    
     for i in range(N):
         R[i] = const**i * Rmin   
     return R
@@ -172,11 +173,12 @@ def viscous_timescale (R):
 
 def emissivity (R,gamma=3):
     '''
-    Calculates emissivity, which describes the total energy loss
+    Calculates emissivity, which is used to find the flux of the disc
+    as the mass accretion rate at a given radius is proportional to its
+    emmissivity at that radius.
     
-    wiki:
-        "Emissivity is defined as the ratio of the energy radiated from 
-         a material's surface to that radiated from a blackbody"
+    gamma is used to probe different parts of the x-ray spectra, eg soft = 3
+    hard = 5
     '''
     em = (R**-gamma)*((R[0]/R)**0.5)
     return em
@@ -215,32 +217,6 @@ def calc_area(R):
     A = np.array([np.pi * (R[i+1] ** 2 - R[i] ** 2) for i in range (len(R) - 1)])
     return A
 
-def Lorentzian(T, Q):
-    '''
-    Calculates Lorentzian curves at each viscous frequency and sums them to
-    create an psudo PSD. Useful for explaination.
-    
-    inputs:
-        T = Array of time series, used to calculate frequency range
-        Q = FWHM of the Lorentzians
-    '''
-    
-    fVisc = viscous_frequency(R)
-    f = np.arange(0, 1.2*max(fVisc), 1.2*max(fVisc)/len(T))
-    S = np.empty(len(f))
-    
-    #j = 5   #Counter for plotting individual Lorentzians
-    for i in range(len(fVisc)):
-        S_store = (Q[i]/2.)**2 / ((f - fVisc[i])**2 + (Q[i]/2.)**2) 
-        S_store_normalized = S_store * 1./max(S_store)
-        
-        plt.figure(4)
-        plt.plot(f, S_store_normalized)
-        #j = j + 1
-        S = S + S_store_normalized
-        #print 'S', S
-    return S, f
-
 #================================================#
 #====================CONSTANTS===================#
 #================================================#
@@ -254,7 +230,7 @@ VERY_BIG = 1E50
 The number of annuli considered is also N = 1000
 '''
 N = 10      #Number of Radii
-Rmin = 0.1  #Minimum (starting) Radius
+Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
 Q_factor = 0.5    #Value of FWHM of each Lorentzian
@@ -319,7 +295,7 @@ visctime = viscous_timescale(R)
 for i in visctime:  #Vertical lines at each viscous timescale
     plt.axvline(x = i, linewidth = 0.25, color='green')
 
-plt.title('Light Curve for disk of %d radii' %N)  
+plt.title('Mass accretion rate(s) for disk of %d radii' %N)  
 plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')     
 for i in range(N): plt.plot(T,M[i], linewidth=0.25, label='r = %d'%i)
@@ -369,8 +345,8 @@ print '========================================'
 
 freq, PSD = PSD_continuous(T,M[0])
 
-fig3 = plt.figure(3, figsize=(7, 4))
-plt.title('PSD')
+fig3 = plt.figure(3, figsize=(7, 7))
+plt.title('PSD at radius 0')
 plt.xlabel('Frequency')
 plt.ylabel('Power')
 plt.loglog(freq,PSD, linewidth=0.25, color='black')
@@ -382,100 +358,35 @@ for i in viscfreq:
     
 ############################
 
-em = emissivity(R)
 
-em1 = np.empty(N-1)
-R1 = np.empty(len(R)-1)
+
+em = emissivity(R)  #Calculates emissivity at every radius
+
+em1 = np.empty(N-1) #used to calculate emissivty between radii
+dr = np.empty(len(R)-1)#used to store delta r (thickness of anuli)
 
 for i in range(N-1):
-    em1[i] = (em[i] + em[i+1]) / 2.
-    R1[i] = R[i+1]-R[i]
+    em1[i] = (em[i] + em[i+1]) / 2. #calculates average emissity of ith anuli
+    dr[i] = R[i+1]-R[i]             #thickness of ith anuli
     
 
-flux1 = 2. * np.pi * R[:-1] * R1 * em1
-M_scaled = np.empty((N-1,tMax))  
+flux1 = 2. * np.pi * R[:-1] * dr * em1 #2*pi*r*dr * em(r) = flux
+M_scaled = np.empty((N-1,tMax))         #Used to store the new scaled lightcurves
+
 for i in range(N-1):
-    M_scaled[i] = flux1[i]/max(flux1) * M[i]
+    M_scaled[i] = flux1[i]/max(flux1) * M[i]    #normalised to 1
 
 
 fig3 = plt.figure(4, figsize=(7, 4))
-for i in range(N-1):plt.plot(T,np.sum(M_scaled, axis=0))
-plt.plot(T,M[0])
+#plotting each radii for comparison
+for i in range(len(M_scaled)): plt.plot(T,M_scaled[i], label=i)
+
+#sum of all radii is total contribution
+plt.plot(T,np.sum(M_scaled, axis=0), label='total') 
+
+plt.legend()
 
 
-
-'''
-##########PSD from Lorentzian combination###########
-
-S_f, Freq = Lorentzian(T, Q)
-
-plt.figure(4)
-plt.title('PSD Lorentzian combination')
-plt.plot(Freq, S_f)
-for i in viscfreq:
-    plt.axvline(x = i, linewidth = 0.5, color = 'r')
-
-
-
-
-
-#------------------------------------
-#Flux vs radius
-B = B_nu(R, 1)
-B = np.delete(B,-1)
-A = calc_area(R)
-
-flux = A*B
-R_new = np.delete(R,-1)
-
-plt.figure(4)
-plt.title('Radius vs flux for frequency = 1 in loglog')
-plt.xlabel('Radius')
-plt.ylabel('Flux')
-plt.loglog(R_new,flux)
-
-fourier = np.fft.fft(y)
-freq = 1/T
-
-
-
-#------------------------------------
-#Total Flux vs frequency
-
-Bnew=[]
-flux_total=[]
-F=np.arange(1,30,0.01)
-for f in F:
-    flux =[]
-    for i in range (len(R)-1):
-        Bnew=B_nu(R, f)
-        flux.append(A[i] * Bnew[i])
-    flux_total.append(sum (flux) )
-
-plt.figure(5)
-F_array = np.asarray(F)
-plt.title('Frequency vs total flux for varying frequencies in loglog')
-plt.xlabel('Frequency')
-plt.ylabel('Total Flux')
-plt.loglog(F_array,flux_total)
-#------------------------------------
-#Emissivity Flux vs radius
-em=emissivity(R)
-em_flux = []
-R_new = []
-
-
-for i in range (len(R)-1):
-    em_flux.append(A[i]*em[i])
-    R_new.append(R[i])
-
-plt.figure(6)
-plt.title('Radius vs em flux for frequency = 1 in loglog')
-plt.xlabel('Radius')
-plt.ylabel('em Flux')
-plt.loglog(R_new,em_flux)
-
-'''
 
 plt.show()
 time1 = time()
