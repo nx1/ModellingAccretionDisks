@@ -221,6 +221,16 @@ def calc_area(R):
     A = np.array([np.pi * (R[i+1] ** 2 - R[i] ** 2) for i in range (len(R) - 1)])
     return A
 
+def calc_flux(R, nu):
+    A = calc_area(R)
+    B = B_nu(R, nu)
+    Flux = np.empty((len(R)-1,tMax))
+    for i in range(len(R)-1):
+        for t in range(tMax):        
+            Flux[i][t] = A[i] * B[i][t]
+    return Flux
+    
+
 #================================================#
 #====================CONSTANTS===================#
 #================================================#
