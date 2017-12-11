@@ -190,7 +190,11 @@ def T_eff (R):
     based off equation 5.43 in Accretion power in astrophysics
     (CONSTANTS OMMITED)
     '''
-    T_eff = R**(-0.75)
+    T_eff = np.empty((len(R),tMax))
+    for i in range (len(R)):
+        for t in range(tMax):
+            T_eff[i][t]= ((M[i][t]/R[i]**3)*(1-(R[0]/R[i])**0.5))**0.25
+        
     return T_eff
 
 
