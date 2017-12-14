@@ -26,7 +26,6 @@ np.random.seed(seed)
 #================================================#
 
 def create_disc (N,Rmin,Rmax):
-    
     '''
     Creates a basic disc with constant ratio between radii
     Returns a python list array.
@@ -34,7 +33,7 @@ def create_disc (N,Rmin,Rmax):
     inputs:
         N       = Number of Annuli
         Rmin    = Radii of innermost disc
-        Rmax  = Radii of outermost disc
+        Rmax    = Radii of outermost disc
     '''
     R = np.empty(N)
     const = np.power(Rmax/Rmin, 1./(N-1))
@@ -55,22 +54,26 @@ def calc_m_dot(R, timeSteps, Q):
     inputs:
         R = array of radii
         timesteps = Number of equal-spaced time steps to generate 
-    
+        Q = FWHM of Lorentzians used in Timmer and Koenig method.
+        
     Uses modifed Timmer and Koenig method from AstroML with a Lorentzian
     distribution peaked at the local viscous frequency for the PSD. 
+    
+    Q = Q_factor * viscous_frequency(R) Where Q factor is between 0.5 to 10
+    Q = 10 produces a narrower PSD
     '''
     F_var = 0.1     #Value of F_var used for normalisation eg 0.1 = 10%
     sigma_var = np.sqrt(F_var**2 / N)   #used to normalise over all annuli
     
-    m_dot = np.empty((len(R), timeSteps))
+    m_dot = np.empty((len(R), timeSteps))#Used to store rxt array of m_dot
     
     fVisc = viscous_frequency(R)
     
-    for i in range(len(R)):
+    for i in range(len(R)): #Calculates m_dot for all radius and time
         print 'Calculating m_dot | R =', i+1, '/', len(R)
         m_dot[i] = generate_power_law(timeSteps, 0.0001, Q[i], fVisc[i])
-        X = sigma_var / np.std(m_dot[i])
-        m_dot[i] = X * m_dot[i]
+        X = sigma_var / np.std(m_dot[i])    #Normalisation
+        m_dot[i] = X * m_dot[i]             #Normalisation
     return m_dot
 
 
@@ -79,18 +82,14 @@ def M_dot(R,t,Mdot0):
     Calculates the mass accretion at a given radii between two annuli
     
     using the equation:
-        M(r) = M_0 * ∏(1+m(r))
+        M(r) = Mdot0 * ∏(1+m(r))
         
     where M(r) is the accretion rate at given radius
-    M(r) is refered to as M_dot
+    M(r) is refered to as Mdot
     
-    M_0 is the outermost radius accretion rate 
+    Mdot0 is the outermost radius accretion rate 
     
     m_dot(r,t), the local small variation of mass at each radius
-    can be modelled as a sinosoidal variation close to A*sin(2*pi*f*t)?
-    where f is 1/(Viscous timescale)
-        It will later be modelled as a power noise distribution as described
-        by Timmer and Koenig (1995)
 
     inputs:
         R         = Array of the radii
@@ -100,11 +99,10 @@ def M_dot(R,t,Mdot0):
     '''
     #m_dot = np.ones(len(R)) * 0.1*np.sin(2 * np.pi * (viscous_frequency(R))* t)
     #if you want to switch back to sinosoid, remove 2nd [t] term on m_dots
-
     
     Mdot = np.zeros(len(R))
     
-    for i in range(len(R)-1,-1,-1):
+    for i in range(len(R)-1,-1,-1): #Runs through all annuli from out to in
         #print 'Radius # ', i
         if i==(len(R)-1):
             Mdot[i]=Mdot0*(1.0 + m_dot[i][t])
@@ -112,6 +110,41 @@ def M_dot(R,t,Mdot0):
             Mdot[i]=Mdot[i+1]*(1.0 + m_dot[i][t])
     return Mdot
 
+    
+def calc_alpha (R):
+    '''
+    Calculates alpha for all radii
+    '''
+    #alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
+    alpha = 0.3
+    return alpha
+
+
+def viscous_frequency(R):
+    '''
+    Calculates the viscous frequency at a given radius
+    '''
+    f_visc = viscous_velocity(R)/R
+    return f_visc
+
+
+def viscous_velocity(R):
+    '''
+    Calculates the viscous velocity at a given radius
+    Also sometimes called the radial drift velocity.
+    '''
+    vel_visc = 1/(2.0 * np.pi) * (R)**(-0.5)  *  (H_R_**2)  *  alpha
+    return vel_visc
+
+
+def viscous_timescale (R):
+    '''
+    Calculates the viscous timescale at a given radius
+    From eq 5.62 Accretion power in astrophysics.
+    Time taken for the process to propogate from annulus to centre
+    '''
+    time_visc = R/viscous_velocity(R)
+    return time_visc
 
 def dampen(M_dot, D):
     '''
@@ -126,49 +159,7 @@ def dampen(M_dot, D):
     fourier = np.fft.fft(M_dot) * np.exp(-D)
     M_dot_new = np.fft.ifft(fourier)
     return M_dot_new
-    
-def calc_alpha (R):
-    #alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
-    alpha = 0.3
-    return alpha
 
-
-def viscous_frequency(R):
-    '''
-    Calculates the viscous frequency at a given radius
-    based off the model by p.arevalo and p.uttley
-    
-    inputs:
-        R         = Array of the radii
-        M_0_start = Starting outer radius mass accretion rate
-    '''
-    f_visc = R**(-1.5) * ((H_R_)**2.0) * alpha/(2.0*np.pi)
-    return f_visc
-
-
-def viscous_velocity(R):
-    '''
-    Also sometimes called the radial drift velocity.
-    Calculates the viscous velocity at a given radius
-    based off the model by p.arevalo and p.uttley
-    
-    inputs:
-        R    = Array of the radii
-        H_R_ = Starting outer radius mass accretion rate
-    '''
-    vel_visc = 1/(2.0 * np.pi) * (R)**(-0.5)  *  (H_R_**2)  *  alpha
-    return vel_visc
-
-
-def viscous_timescale (R):
-    '''
-    Calculates the viscous timescale at a given radius
-    R/Viscous_velocity    or    R^2 / viscosity
-    From eq 5.62 Accretion power in astrophysics.
-    Time taken for the process to propogate from adjacent annulus
-    '''
-    time_visc = R/viscous_velocity(R)
-    return time_visc
 
 
 def emissivity (R,gamma=3):
@@ -218,10 +209,17 @@ def calc_area(R):
     Calculates the area of annuli from list of radii
     Returns len(R) - 1 list of areas
     '''
-    A = np.array([np.pi * (R[i+1] ** 2 - R[i] ** 2) for i in range (len(R) - 1)])
+    A = np.array([np.pi * (R[i+1] ** 2. - R[i] ** 2.) for i in range (len(R) - 1)])
     return A
 
 def calc_flux(R, nu):
+    '''
+    Calculates the flux via blackbody spectrum at all radius and all time
+    returns rxt array
+    inputs:
+        R = list of Radii
+        nu = frequency
+    '''
     A = calc_area(R)
     B = B_nu(R, nu)
     Flux = np.empty((len(R)-1,tMax))
@@ -230,6 +228,15 @@ def calc_flux(R, nu):
             Flux[i][t] = A[i] * B[i][t]
     return Flux
     
+def average_arr(arr):
+    '''
+    Calcutes the average value between each item in an array arr
+    return length len(arr) - 1 array of new values
+    '''
+    arr1 = np.empty(len(arr)-1)
+    for i in range(len(arr)-1):
+        arr1[i] = (arr[i] + arr[i+1]) / 2.
+    return arr1
 
 #================================================#
 #====================CONSTANTS===================#
@@ -237,13 +244,12 @@ def calc_flux(R, nu):
 
 H_R_= 1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
 M_0_start = 1.0 #Starting M_0 at outermost radius
-VERY_BIG = 1E50
 
 #Disk constants
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 10      #Number of Radii
+N = 100      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -259,6 +265,10 @@ Q = Q_factor * viscous_frequency(R)  #FWHM of Lorentzians
 tMax = int(tMax_factor * max(viscous_timescale(R)))
 if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
     tMax = tMax + 1
+    
+    
+    
+    
     
 #================================================#
 #=======================MAIN=====================#
@@ -323,7 +333,6 @@ print ''
 a = np.array_split(T, len(T)/(tMax/10))
 count_bin = np.array_split(M[0], len(M[0])/(tMax/10))
 
-
 b_avg = np.empty(len(a))
 b_rms = np.empty(len(a))
 
@@ -370,35 +379,46 @@ viscfreq = viscous_frequency(R)
 for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.25)
     
-############################
-
-
-
-em = emissivity(R)  #Calculates emissivity at every radius
-
-em1 = np.empty(N-1) #used to calculate emissivty between radii
-dr = np.empty(len(R)-1)#used to store delta r (thickness of anuli)
-
-for i in range(N-1):
-    em1[i] = (em[i] + em[i+1]) / 2. #calculates average emissity of ith anuli
-    dr[i] = R[i+1]-R[i]             #thickness of ith anuli
     
 
-flux1 = 2. * np.pi * R[:-1] * dr * em1 #2*pi*r*dr * em(r) = flux
-M_scaled = np.empty((N-1,tMax))         #Used to store the new scaled lightcurves
+############# Light Curves From Emissivity #############
+
+em = emissivity(R)  #Calculates emissivity at every radius
+em1 = average_arr(em)
+area = calc_area(R)
+flux = area * em1
+
+M_scaled = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
 
 for i in range(N-1):
-    M_scaled[i] = flux1[i]/max(flux1) * M[i]    #normalised to 1
+    M_scaled[i] = flux[i]/max(flux) * M[i]    #normalised to 1
 
-
-fig3 = plt.figure(4, figsize=(7, 4))
+fig4 = plt.figure(4, figsize=(7, 4))
 #plotting each radii for comparison
 for i in range(len(M_scaled)): plt.plot(T,M_scaled[i], label=i)
 
 #sum of all radii is total contribution
 plt.plot(T,np.sum(M_scaled, axis=0), label='total') 
-
 plt.legend()
+
+########################################################
+
+
+
+############# Light Curves From Blackbody #############
+
+fig5 = plt.figure(5, figsize=(7, 4))
+plt.xlabel('Radius')
+plt.ylabel('flux')
+for i in np.arange(0, 10. , 1.):
+    flux2 = calc_flux(R,i)
+    plt.plot(R[:-1],np.transpose(flux2)[0], label=i)
+plt.legend()
+
+
+
+
+
 
 
 
