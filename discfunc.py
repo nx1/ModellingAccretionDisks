@@ -116,7 +116,7 @@ def calc_alpha (R):
     Calculates alpha for all radii
     '''
     #alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
-    alpha = 0.3
+    alpha = 0.01
     return alpha
 
 
@@ -344,7 +344,7 @@ for i in range(len(a)):
 
 
 fig2 = plt.figure(2, figsize=(7, 7)) 
-plt.xlabel('average count rate')
+plt.xlabel('Average count rate')
 plt.ylabel('rms') 
 """
 fit = np.polyfit(b_avg,b_rms,1)
@@ -394,12 +394,15 @@ for i in range(N-1):
     M_scaled[i] = flux[i]/max(flux) * M[i]    #normalised to 1
 
 fig4 = plt.figure(4, figsize=(7, 4))
+plt.xlabel('Time')
+plt.ylabel('Count')
 #plotting each radii for comparison
-for i in range(len(M_scaled)): plt.plot(T,M_scaled[i], label=i)
+#for i in range(len(M_scaled)): plt.plot(T,M_scaled[i], label=i)
 
 #sum of all radii is total contribution
-plt.plot(T,np.sum(M_scaled, axis=0), label='total') 
-plt.legend()
+plt.plot(T,np.max(np.sum(M_scaled, axis=0)) / np.sum(M_scaled, axis=0), label='total', color='black', linewidth = 0.5) 
+
+#plt.legend()
 
 ########################################################
 
@@ -414,11 +417,6 @@ for i in np.arange(0, 10. , 1.):
     flux2 = calc_flux(R,i)
     plt.plot(R[:-1],np.transpose(flux2)[0], label=i)
 plt.legend()
-
-
-
-
-
 
 
 
