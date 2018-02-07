@@ -54,7 +54,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
     inputs:
         R = array of radii
         timesteps = Number of equal-spaced time steps to generate 
-        Q = FWHM of Lorentzians used in Timmer and Koenig method.
+        Q = Quality factor Lorentzian peak freq / FWHM
         
     Uses modifed Timmer and Koenig method from AstroML with a Lorentzian
     distribution peaked at the local viscous frequency for the PSD. 
@@ -71,7 +71,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
 
         for i in range(len(R)): #Calculates m_dot for all radius and time
             print 'Calculating m_dot | R =', i+1, '/', len(R)
-            m_dot[i] = generate_power_law(timeSteps, 0.0001, Q[i], fVisc[i])
+            m_dot[i] = generate_power_law(timeSteps, 0.0001, Q, fVisc[i])
             X = sigma_var / np.std(m_dot[i])    #Normalisation
             m_dot[i] = X * m_dot[i]             #Normalisation
             
@@ -254,11 +254,11 @@ M_0_start = 1.0 #Starting M_0 at outermost radius
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 3      #Number of Radii
+N = 1000      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
-Q_factor = 0.5    #Value of FWHM of each Lorentzian
+Q = 0.5  #Q is defined as the ratio of lorenzian peak freqency to FWHM
 tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
 
 
@@ -267,7 +267,6 @@ tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
 R = create_disc(N, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
 alpha = calc_alpha(R)           #Caclulates value of alpha at each radius
-Q = Q_factor * viscous_frequency(R)  #FWHM of Lorentzians
 tMax = int(tMax_factor * max(viscous_timescale(R)))
 if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
     tMax = tMax + 1
@@ -283,7 +282,7 @@ time0 = time()
 
 print '--------- Calculating m_dot (small) ---------'
 print 'radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor
-sinusoid = True    #Creates m_dot as either sinusoids or timmer and koenig              
+sinusoid = False    #Creates m_dot as either sinusoids or timmer and koenig              
 m_dot = calc_m_dot(R, tMax, Q, sinusoid)
 print 'DONE in: ', time() - time0
 print '---------------------------------------------'   
@@ -308,12 +307,10 @@ print '############# CALCULATING M_DOT #############'
 
 M=np.empty((tMax,N))
 T=np.arange(tMax)
-for t in np.arange(0,tMax,1):
-    #y[t] = dampen(M_dot(R, t, M_0_start), 0.5)[0]    #Damped
-    #y[t] = M_dot(R, t, M_0_start)[0]
+for t in np.arange(0,tMax,1):   
     
     M[t] = M_dot(R, t, M_0_start)
-    
+    #M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
     percents = round(100.0 * t / float(tMax), 4)
     if percents % 10.00==0:
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax

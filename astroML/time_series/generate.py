@@ -52,7 +52,10 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
     x_fft.imag[1:] = random_state.normal(0, 1, len(omega) - 1)
 
     #Square root of Lorentzian with peak at fVisc
-    x_fft[1:] *= ( (Q/2.)**2 / ((omega[1:] - 2.*np.pi*fVisc)**2. + (Q/2.)**2.) )**0.5 
+    GAMMA = fVisc/2*Q        #Gamma is 2x the FWHM for a standard cauchy distribution
+                             #In Arevalo and Uttley Q is defined as the 
+                             #Ratio of lorentzian peak frequency to FHWM
+    x_fft[1:] *= ( (GAMMA)**2 / ((omega[1:] - 2.*np.pi*fVisc)**2. + (GAMMA)**2.) )**0.5 
     x_fft[1:] *= (1. / np.sqrt(2))
     
     # by symmetry, the Nyquist frequency is real if x is real
