@@ -43,7 +43,7 @@ def create_disc (N,Rmin,Rmax):
     return R
    
 
-def calc_m_dot(R, timeSteps, Q):
+def calc_m_dot(R, timeSteps, Q, sinusoid):
     '''
     Calculates the local small mass accretion rate for all radius and time
     returns a 2 dimensional (len(R), timesteps) size ndarray
@@ -62,18 +62,24 @@ def calc_m_dot(R, timeSteps, Q):
     Q = Q_factor * viscous_frequency(R) Where Q factor is between 0.5 to 10
     Q = 10 produces a narrower PSD
     '''
-    F_var = 0.1     #Value of F_var used for normalisation eg 0.1 = 10%
-    sigma_var = np.sqrt(F_var**2 / N)   #used to normalise over all annuli
-    
     m_dot = np.empty((len(R), timeSteps))#Used to store rxt array of m_dot
-    
     fVisc = viscous_frequency(R)
     
-    for i in range(len(R)): #Calculates m_dot for all radius and time
-        print 'Calculating m_dot | R =', i+1, '/', len(R)
-        m_dot[i] = generate_power_law(timeSteps, 0.0001, Q[i], fVisc[i])
-        X = sigma_var / np.std(m_dot[i])    #Normalisation
-        m_dot[i] = X * m_dot[i]             #Normalisation
+    if not sinusoid:
+        F_var = 0.1     #Value of F_var used for normalisation eg 0.1 = 10%
+        sigma_var = np.sqrt(F_var**2 / N)   #used to normalise over all annuli
+
+        for i in range(len(R)): #Calculates m_dot for all radius and time
+            print 'Calculating m_dot | R =', i+1, '/', len(R)
+            m_dot[i] = generate_power_law(timeSteps, 0.0001, Q[i], fVisc[i])
+            X = sigma_var / np.std(m_dot[i])    #Normalisation
+            m_dot[i] = X * m_dot[i]             #Normalisation
+            
+    else:
+        for r in range(len(R)): #Calculates m_dot for all radius and time
+            for t in range(timeSteps):
+                m_dot[r][t] = 0.1*np.sin(2.0 * np.pi * (fVisc[r]) * t)
+        
     return m_dot
 
 
@@ -97,8 +103,7 @@ def M_dot(R,t,Mdot0):
         Mdot0     = Outermost radius accretion rate
     
     '''
-    #m_dot = np.ones(len(R)) * 0.1*np.sin(2 * np.pi * (viscous_frequency(R))* t)
-    #if you want to switch back to sinosoid, remove 2nd [t] term on m_dots
+    #
     
     Mdot = np.zeros(len(R))
     
@@ -116,7 +121,7 @@ def calc_alpha (R):
     Calculates alpha for all radii
     '''
     #alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
-    alpha = 0.01
+    alpha = 0.3
     return alpha
 
 
@@ -249,12 +254,13 @@ M_0_start = 1.0 #Starting M_0 at outermost radius
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 100      #Number of Radii
+N = 3      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
 Q_factor = 0.5    #Value of FWHM of each Lorentzian
 tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
+
 
 
 #==================Variables=====================#
@@ -277,7 +283,8 @@ time0 = time()
 
 print '--------- Calculating m_dot (small) ---------'
 print 'radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor
-m_dot = calc_m_dot(R,tMax, Q)
+sinusoid = True    #Creates m_dot as either sinusoids or timmer and koenig              
+m_dot = calc_m_dot(R, tMax, Q, sinusoid)
 print 'DONE in: ', time() - time0
 print '---------------------------------------------'   
 print ''                    
