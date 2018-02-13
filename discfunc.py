@@ -71,7 +71,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
 
         for i in range(len(R)): #Calculates m_dot for all radius and time
             print 'Calculating m_dot | R =', i+1, '/', len(R)
-            m_dot[i] = generate_power_law(timeSteps, 0.0001, Q, fVisc[i])
+            m_dot[i] = generate_power_law(timeSteps, 1.0, Q, fVisc[i])
             X = sigma_var / np.std(m_dot[i])    #Normalisation
             m_dot[i] = X * m_dot[i]             #Normalisation
             
@@ -254,12 +254,12 @@ M_0_start = 1.0 #Starting M_0 at outermost radius
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 3      #Number of Radii
+N = 5      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
 Q = 0.5  #Q is defined as the ratio of lorenzian peak freqency to FWHM
-tMax_factor = 1.1   #Number of maximum viscous timescales to calculate to
+tMax_factor = 100.1   #Number of maximum viscous timescales to calculate to
 
 
 
@@ -384,7 +384,7 @@ for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.25)
     
     
-'''
+
 ############# Light Curves From Emissivity #############
 
 em = emissivity(R)  #Calculates emissivity at every radius
@@ -411,7 +411,7 @@ plt.plot(T,np.max(np.sum(M_scaled, axis=0)) / np.sum(M_scaled, axis=0), label='t
 ########################################################
 
 
-
+'''
 ############# Light Curves From Blackbody #############
 
 fig5 = plt.figure(5, figsize=(7, 4))

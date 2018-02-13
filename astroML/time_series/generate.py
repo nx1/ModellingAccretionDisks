@@ -47,18 +47,25 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
         omega = domega * np.arange(Npos + 1)
 
     
+    
+    GAMMA = fVisc/2*Q        #Gamma is 2x the FWHM for a standard cauchy distribution
+                             #In Arevalo and Uttley Q is defined as the 
+                             #Ratio of lorentzian peak frequency to FHWM    
+    
+    
     x_fft = np.zeros(len(omega), dtype=complex)
+    Lorentzian = np.zeros(len(omega), dtype=complex)
+
     x_fft.real[1:] = random_state.normal(0, 1, len(omega) - 1)
     x_fft.imag[1:] = random_state.normal(0, 1, len(omega) - 1)
 
     #Square root of Lorentzian with peak at fVisc
-    GAMMA = fVisc/2*Q        #Gamma is 2x the FWHM for a standard cauchy distribution
-                             #In Arevalo and Uttley Q is defined as the 
-                             #Ratio of lorentzian peak frequency to FHWM
     x_fft[1:] *= ( (GAMMA)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (GAMMA)**2.) )**0.5 #NEW
+    Lorentzian[1:] = ( (GAMMA)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (GAMMA)**2.) )**0.5 #To plot lorentzians
+
     #x_fft[1:] *= 1./max(x_fft)
     #x_fft[1:] *= ( (Q/2.)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (Q/2.)**2.) )**0.5 #old     
-    x_fft[1:] *= (1. / np.sqrt(2))             #Some sort of normalisation
+    #x_fft[1:] *= (1. / np.sqrt(2))             #Some sort of normalisation
     
       
     
@@ -77,7 +84,7 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
     plt.title('x_fft vs omega')
     plt.xlabel('omega')
     plt.ylabel('x_fft')
-    plt.plot(omega,x_fft, linewidth=1.0)  
+    plt.plot(omega,Lorentzian, linewidth=1.0)  
 
     return x
 
