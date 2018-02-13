@@ -254,7 +254,7 @@ M_0_start = 1.0 #Starting M_0 at outermost radius
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 1000      #Number of Radii
+N = 3      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -384,7 +384,7 @@ for i in viscfreq:
     plt.axvline(x = i, linewidth = 0.25)
     
     
-
+'''
 ############# Light Curves From Emissivity #############
 
 em = emissivity(R)  #Calculates emissivity at every radius
@@ -421,9 +421,28 @@ for i in np.arange(0, 10. , 1.):
     flux2 = calc_flux(R,i)
     plt.plot(R[:-1],np.transpose(flux2)[0], label=i)
 plt.legend()
-
+'''
 
 
 plt.show()
 time1 = time()
 print 'Time taken', time1-time0, '| seed:', seed
+    
+    
+############ PSD for m_dot ############
+frog = 0
+freq1, PSD1 = PSD_continuous(T,m_dot[frog])
+
+fig8 = plt.figure(8, figsize=(7, 7))
+plt.title('PSD for m_dot[%s]' %frog)
+plt.xlabel('Frequency')
+plt.ylabel('PSD')
+plt.loglog(freq1,PSD1, linewidth=0.25, color='black')
+viscfreq = viscous_frequency(R)
+
+for i in viscfreq:
+    if i == viscfreq[frog]:
+        plt.axvline(x = i, linewidth = 0.25, color='red')
+    else:
+        plt.axvline(x = i, linewidth = 0.25)
+    

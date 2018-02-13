@@ -1,7 +1,7 @@
 import numpy as np
 from ..utils import check_random_state
 from scipy.fftpack import ifft
-
+import matplotlib.pyplot as plt
 def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=None):
     """Generate a power-law light curve
 
@@ -16,7 +16,7 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
     beta : float
         Power-law index.  The spectrum will be (1 / f)^beta
     Q: float
-        FWHM of Lorentzian peak
+        Q factor of Lorentzian peak
     fVisc: float
         Viscous frequency at given radius
     generate_complex : boolean (optional)
@@ -55,8 +55,14 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
     GAMMA = fVisc/2*Q        #Gamma is 2x the FWHM for a standard cauchy distribution
                              #In Arevalo and Uttley Q is defined as the 
                              #Ratio of lorentzian peak frequency to FHWM
-    x_fft[1:] *= ( (GAMMA)**2 / ((omega[1:] - 2.*np.pi*fVisc)**2. + (GAMMA)**2.) )**0.5 
-    x_fft[1:] *= (1. / np.sqrt(2))
+    x_fft[1:] *= ( (GAMMA)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (GAMMA)**2.) )**0.5 #NEW
+    #x_fft[1:] *= 1./max(x_fft)
+    #x_fft[1:] *= ( (Q/2.)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (Q/2.)**2.) )**0.5 #old     
+    x_fft[1:] *= (1. / np.sqrt(2))             #Some sort of normalisation
+    
+      
+    
+    
     
     # by symmetry, the Nyquist frequency is real if x is real
     if (not generate_complex) and (N % 2 == 0):
@@ -66,6 +72,13 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
     else:
         #x = ifft(x_fft, N)  #Slow for Large N
         x = np.fft.ifft(x_fft, N)  #Slow for Large N
+        
+    fig7 = plt.figure(7, figsize=(7, 7))
+    plt.title('x_fft vs omega')
+    plt.xlabel('omega')
+    plt.ylabel('x_fft')
+    plt.plot(omega,x_fft, linewidth=1.0)  
+
     return x
 
 
