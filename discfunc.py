@@ -7,10 +7,10 @@ Created on Mon Oct  9 16:18:50 2017
 
 Authors: Vysakh Salil, Norman Khan
 
-Contains the main functions used for the accretion disk model 
-Heavily based on the model proposed by P Arevalo P Uttley 2005 
+This program contains a model for a fluctuating accretion disk based on 
+the model put forward by P. Arevalo and P. Uttley in 2005
+DOI: 	10.1111/j.1365-2966.2006.09989.x
 """
-
 import numpy as np
 import matplotlib.pyplot as plt
 from time import time #remove once finished
@@ -21,6 +21,7 @@ from scipy import stats
 #seed = 5
 seed = int(100*np.random.random())
 np.random.seed(seed)
+
 #================================================#
 #====================FUNCTIONS===================#
 #================================================#
@@ -259,7 +260,7 @@ Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
 Q = 0.5  #Q is defined as the ratio of lorenzian peak freqency to FWHM
-tMax_factor = 100.1   #Number of maximum viscous timescales to calculate to
+tMax_factor = 10.1   #Number of maximum viscous timescales to calculate to
 
 
 
@@ -279,7 +280,7 @@ if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
 #=======================MAIN=====================#
 #================================================#
 time0 = time()
-
+print ''
 print '--------- Calculating m_dot (small) ---------'
 print 'radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor
 sinusoid = False    #Creates m_dot as either sinusoids or timmer and koenig              
@@ -375,13 +376,13 @@ freq, PSD = PSD_continuous(T,M[0])
 fig3 = plt.figure(3, figsize=(7, 7))
 plt.title('PSD at radius 0')
 plt.xlabel('Frequency')
-plt.ylabel('Power')
-plt.loglog(freq,PSD, linewidth=0.25, color='black')
+plt.ylabel('f*P(f)')
+plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
 
 viscfreq = viscous_frequency(R)
 
 for i in viscfreq:
-    plt.axvline(x = i, linewidth = 0.25)
+    plt.axvline(x = i, linewidth = 1.0, linestyle='--')
     
     
 
@@ -430,19 +431,19 @@ print 'Time taken', time1-time0, '| seed:', seed
     
     
 ############ PSD for m_dot ############
-frog = 0
-freq1, PSD1 = PSD_continuous(T,m_dot[frog])
+radius = 0
+freq1, PSD1 = PSD_continuous(T,m_dot[radius])
 
 fig8 = plt.figure(8, figsize=(7, 7))
-plt.title('PSD for m_dot[%s]' %frog)
+plt.title('PSD for m_dot[%s]' %radius)
 plt.xlabel('Frequency')
-plt.ylabel('PSD')
-plt.loglog(freq1,PSD1, linewidth=0.25, color='black')
+plt.ylabel('f*P(f)')
+plt.loglog(freq1,PSD1*freq1, linewidth=0.25, color='black')
 viscfreq = viscous_frequency(R)
 
 for i in viscfreq:
-    if i == viscfreq[frog]:
-        plt.axvline(x = i, linewidth = 0.25, color='red')
+    if i == viscfreq[radius]:
+        plt.axvline(x = i, linewidth = 1.0, color='red', linestyle='--')
     else:
-        plt.axvline(x = i, linewidth = 0.25)
+        plt.axvline(x = i, linewidth = 1.0, linestyle='--')
     

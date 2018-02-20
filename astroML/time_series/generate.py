@@ -81,10 +81,11 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
         x = np.fft.ifft(x_fft, N)  #Slow for Large N
         
     fig7 = plt.figure(7, figsize=(7, 7))
-    plt.title('x_fft vs omega')
-    plt.xlabel('omega')
+    plt.title('x_fft vs 2*pi*f')
+    plt.xlabel('2*pi*f')
     plt.ylabel('x_fft')
-    plt.plot(omega,Lorentzian, linewidth=1.0)  
+    plt.loglog(omega,Lorentzian, linewidth=1.0)  
+    plt.axvline(x = 2*np.pi*fVisc, linewidth = 1.0, color='green', linestyle='--')
 
     return x
 
