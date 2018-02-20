@@ -17,7 +17,7 @@ from time import time #remove once finished
 from astroML.time_series.generate import generate_power_law
 from astroML.fourier import PSD_continuous
 from scipy import stats
-
+from scipy import signal
 #seed = 5
 seed = int(100*np.random.random())
 np.random.seed(seed)
@@ -168,7 +168,7 @@ def dampen(M_dot, D):
 
 
 
-def emissivity (R,gamma=3):
+def emissivity (R,gamma):
     '''
     Calculates emissivity, which is used to find the flux of the disc
     as the mass accretion rate at a given radius is proportional to its
@@ -255,7 +255,7 @@ M_0_start = 1.0 #Starting M_0 at outermost radius
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 5      #Number of Radii
+N = 100      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -303,15 +303,19 @@ print '============================================='
 print ''
 print '############# CALCULATING M_DOT #############'
 
+
+
+
 ############-Count Rate vs Time-############
 
 
 M=np.empty((tMax,N))
 T=np.arange(tMax)
+
 for t in np.arange(0,tMax,1):   
     
-    M[t] = M_dot(R, t, M_0_start)
-    #M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
+    #M[t] = M_dot(R, t, M_0_start)
+    M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
     percents = round(100.0 * t / float(tMax), 4)
     if percents % 10.00==0:
        print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
@@ -369,47 +373,76 @@ print 'std_err:', std_err
 print '========================================'
 
 
-############ PSD ############
 
-freq, PSD = PSD_continuous(T,M[0])
-
-fig3 = plt.figure(3, figsize=(7, 7))
-plt.title('PSD at radius 0')
-plt.xlabel('Frequency')
-plt.ylabel('f*P(f)')
-plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
-
-viscfreq = viscous_frequency(R)
-
-for i in viscfreq:
-    plt.axvline(x = i, linewidth = 1.0, linestyle='--')
     
     
 
 ############# Light Curves From Emissivity #############
 
-em = emissivity(R)  #Calculates emissivity at every radius
-em1 = average_arr(em)
-area = calc_area(R)
-flux = area * em1
+em_soft = emissivity(R,3)  #Calculates emissivity at every radius (soft)
+em_hard = emissivity(R,5)  #Calculates emissivity at every radius (hard)
 
-M_scaled = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
+em_soft_avg = average_arr(em_soft)
+em_hard_avg = average_arr(em_hard)
+
+area = calc_area(R)
+
+flux_soft = area * em_soft_avg
+flux_hard = area * em_hard_avg
+
+M_scaled_soft = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
+M_scaled_hard = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
 
 for i in range(N-1):
-    M_scaled[i] = flux[i]/max(flux) * M[i]    #normalised to 1
+    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M[i]    #normalised to 1
+    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M[i]    #normalised to 1
+
+
+M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
+M_total_hard = np.sum(M_scaled_hard, axis=0) / np.max(np.sum(M_scaled_hard, axis=0))
+
 
 fig4 = plt.figure(4, figsize=(7, 4))
+plt.title('Lightcurve from emissivity for soft/hard state')
 plt.xlabel('Time')
 plt.ylabel('Count')
-#plotting each radii for comparison
-#for i in range(len(M_scaled)): plt.plot(T,M_scaled[i], label=i)
 
 #sum of all radii is total contribution
-plt.plot(T,np.max(np.sum(M_scaled, axis=0)) / np.sum(M_scaled, axis=0), label='total', color='black', linewidth = 0.5) 
+plt.plot(T,M_total_soft, label='soft', color='black', linewidth = 0.5) 
+plt.plot(T,M_total_hard, label='hard', color='red', linewidth = 0.5) 
+plt.legend()
+
+
+cor=np.correlate(M_total_soft,M_total_hard, mode='full')
+
+fig6 = plt.figure(6, figsize=(7, 4))
+
+plt.plot(np.arange(0,len(cor),1),cor)
 
 #plt.legend()
 
 ########################################################
+
+
+
+
+############ PSD ############
+
+freq, PSD = PSD_continuous(T,M_total_soft)
+
+fig3 = plt.figure(3, figsize=(7, 7))
+plt.title('PSD at for total light curve soft')
+plt.xlabel('Frequency')
+plt.ylabel('f*P(f)')
+#plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
+plt.loglog(freq, PSD*freq, marker='x', markevery=5, linewidth=0.25, color='black') 
+viscfreq = viscous_frequency(R)
+
+for i in viscfreq:
+    plt.axvline(x = i, linewidth = 1.0, linestyle='--')
+
+
+
 
 
 '''
@@ -429,7 +462,7 @@ plt.show()
 time1 = time()
 print 'Time taken', time1-time0, '| seed:', seed
     
-    
+'''
 ############ PSD for m_dot ############
 radius = 0
 freq1, PSD1 = PSD_continuous(T,m_dot[radius])
@@ -446,4 +479,4 @@ for i in viscfreq:
         plt.axvline(x = i, linewidth = 1.0, color='red', linestyle='--')
     else:
         plt.axvline(x = i, linewidth = 1.0, linestyle='--')
-    
+'''

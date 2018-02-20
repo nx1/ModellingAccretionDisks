@@ -39,7 +39,7 @@ def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=Non
 
     Npos = int(N / 2)
     Nneg = int((N - 1) / 2)
-    domega = (2 * np.pi / dt / N)
+    domega = (2 * np.pi / (N * dt))
     
     if generate_complex:
         omega = domega * np.fft.ifftshift(np.arange(N) - int(N / 2))
