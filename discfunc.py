@@ -63,6 +63,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
     Q = Q_factor * viscous_frequency(R) Where Q factor is between 0.5 to 10
     Q = 10 produces a narrower PSD
     '''
+    print '--------- Calculating m_dot (small) ---------' 
     m_dot = np.empty((len(R), timeSteps))#Used to store rxt array of m_dot
     fVisc = viscous_frequency(R)
     
@@ -80,6 +81,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
         for r in range(len(R)): #Calculates m_dot for all radius and time
             for t in range(timeSteps):
                 m_dot[r][t] = 0.1*np.sin(2.0 * np.pi * (fVisc[r]) * t)
+    print '---------------------DONE--------------------' 
         
     return m_dot
 
@@ -244,6 +246,36 @@ def average_arr(arr):
         arr1[i] = (arr[i] + arr[i+1]) / 2.
     return arr1
 
+def shift_M_dot(M_dot):
+    '''
+    Calculates the shift in the mass accretion rate by the propagation time from
+    the outermost annulus to the present annulus
+    '''
+    ViscTime = viscous_timescale(R)
+    ViscTimeMax = int(max(ViscTime))
+    
+    deltaT = np.empty(N)        #To insert
+    deltaT_append = np.empty(N) #To append
+    
+    
+    for i in range(N):                
+        deltaT[i] = int(ViscTimeMax - ViscTime[i])
+        deltaT_append[i] = deltaT[0] - deltaT[i]
+    print 'deltaT:', deltaT
+    print 'append:', deltaT_append
+        
+    M_shifted = np.empty((N, len(M_dot[0] + deltaT[0])))
+    
+    for r in range(N):
+        M_inserted = np.insert(M_dot[r], 0, np.zeros(deltaT[i]))
+        M_shifted[i] = np.append(M_inserted, np.zeros(deltaT_append))
+
+    return M_shifted
+    
+    
+    
+    
+
 #================================================#
 #====================CONSTANTS===================#
 #================================================#
@@ -255,7 +287,7 @@ M_0_start = 1.0 #Starting M_0 at outermost radius
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 100      #Number of Radii
+N = 5      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -268,10 +300,15 @@ tMax_factor = 10.1   #Number of maximum viscous timescales to calculate to
 R = create_disc(N, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
 alpha = calc_alpha(R)           #Caclulates value of alpha at each radius
-tMax = int(tMax_factor * max(viscous_timescale(R)))
+
+ViscMax = max(viscous_timescale(R))
+tMax = int(tMax_factor * ViscMax)
 if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
     tMax = tMax + 1
     
+sinusoid = False    #Creates m_dot as either sinusoids or timmer and koenig  
+          
+m_dot = calc_m_dot(R, tMax, Q, sinusoid)    
     
     
     
@@ -281,24 +318,19 @@ if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
 #================================================#
 time0 = time()
 print ''
-print '--------- Calculating m_dot (small) ---------'
-print 'radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor
-sinusoid = False    #Creates m_dot as either sinusoids or timmer and koenig              
-m_dot = calc_m_dot(R, tMax, Q, sinusoid)
-print 'DONE in: ', time() - time0
+print 'radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor, '| ViscMax', ViscMax
 print '---------------------------------------------'   
 print ''                    
-
 print '============== DISK PARAMETERS =============='
 np.set_printoptions(precision = 2, linewidth = 100)
 print 'Number of radii:', N
-print 'Radii:', R
 print 'alphas:', alpha
+print 'Radii:         ', R
 print 'visc_timescale:', viscous_timescale(R)
 np.set_printoptions(precision = 4, linewidth = 100)
-print 'visc_freq: ', viscous_frequency(R)
-print 'visc_vel:', viscous_velocity(R)
-print 'M_dot: ', M_dot(R, 1, M_0_start)
+print 'visc_freq:     ', viscous_frequency(R)
+print 'visc_vel:      ', viscous_velocity(R)
+print 'M_dot:         ', M_dot(R, 1, M_0_start)
 print '============================================='
 print ''
 print '############# CALCULATING M_DOT #############'
@@ -393,9 +425,11 @@ flux_hard = area * em_hard_avg
 M_scaled_soft = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
 M_scaled_hard = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
 
+M_shifted = shift_M_dot(M)
+
 for i in range(N-1):
-    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M[i]    #normalised to 1
-    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M[i]    #normalised to 1
+    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M_shifted[i]    #normalised to 1
+    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M_shifted[i]    #normalised to 1
 
 
 M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
