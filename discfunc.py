@@ -261,20 +261,45 @@ def shift_M_dot(M_dot):
     for i in range(N):                
         deltaT[i] = int(ViscTimeMax - ViscTime[i])
         deltaT_append[i] = deltaT[0] - deltaT[i]
+        
     print 'deltaT:', deltaT
     print 'append:', deltaT_append
         
-    M_shifted = np.empty((N, len(M_dot[0] + deltaT[0])))
-    
+    M_shifted = np.empty((N, len(M_dot[0]) + deltaT[0]))
+    print 'M_dot length:', 
+    print 'M_shifted length:', len(M_shifted[0])
+    print 'MDOT'
+    print M_dot
     for r in range(N):
-        M_inserted = np.insert(M_dot[r], 0, np.zeros(deltaT[i]))
-        M_shifted[i] = np.append(M_inserted, np.zeros(deltaT_append))
+        print 'MDOT', r
+        print M_dot[r]
+        
+        M_inserted = np.insert(M_dot[r], 0, np.zeros(deltaT[r]))     
+        M_shifted[r] = np.append(M_inserted, np.zeros(deltaT_append[r]))
 
     return M_shifted
+
+def filter_factor(R, rf, gamma):
+    '''
+    Calculates the Filter factor for Normalisation of the PSD
+    See appendix arevalo, Uttley
+    Inputs:
+        R = as array
+        Gamma = as int
+        rf = final radius for filter factor
+    '''
+    em = emissivity(R,gamma)
+    area = calc_area(R)
+    em_avg = average_arr(em_soft)
     
     
+    flux_array  = area * em_soft_avg
     
+    flux_tot = np.sum(flux_array)
+    flux_rf = np.sum(flux_array[:rf])
     
+    filter_factor = (flux_rf/flux_tot)**2.
+    return filter_factor
 
 #================================================#
 #====================CONSTANTS===================#
@@ -387,11 +412,8 @@ for i in range(len(a)):
 fig2 = plt.figure(2, figsize=(7, 7)) 
 plt.xlabel('Average count rate')
 plt.ylabel('rms') 
-"""
-fit = np.polyfit(b_avg,b_rms,1)
-fit_fn = np.poly1d(fit) 
-plt.plot(b_avg,fit_fn(b_avg), color='r')
-"""
+
+plt.plot(np.unique(b_avg), np.poly1d(np.polyfit(b_avg, b_rms, 1))(np.unique(b_avg)), color='r')
 
 plt.scatter(b_avg,b_rms, marker='x')
 
@@ -404,10 +426,6 @@ print 'p_value:', p_value
 print 'std_err:', std_err
 print '========================================'
 
-
-
-    
-    
 
 ############# Light Curves From Emissivity #############
 
@@ -422,14 +440,16 @@ area = calc_area(R)
 flux_soft = area * em_soft_avg
 flux_hard = area * em_hard_avg
 
-M_scaled_soft = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
-M_scaled_hard = np.empty((N-1,tMax))   #Used to store the new scaled lightcurves
-
 M_shifted = shift_M_dot(M)
 
+M_scaled_soft = np.empty((N-1, len(M[0])))   #Used to store the new scaled lightcurves
+M_scaled_hard = np.empty((N-1, len(M[0])))   #Used to store the new scaled lightcurves
+
+
+
 for i in range(N-1):
-    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M_shifted[i]    #normalised to 1
-    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M_shifted[i]    #normalised to 1
+    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M[i]    #normalised to 1
+    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M[i]    #normalised to 1
 
 
 M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
@@ -441,9 +461,13 @@ plt.title('Lightcurve from emissivity for soft/hard state')
 plt.xlabel('Time')
 plt.ylabel('Count')
 
+#T = np.arange(0,len(M_total_soft),1)
+
 #sum of all radii is total contribution
 plt.plot(T,M_total_soft, label='soft', color='black', linewidth = 0.5) 
-plt.plot(T,M_total_hard, label='hard', color='red', linewidth = 0.5) 
+plt.plot(T,M_total_hard, label='hard', color='red', linewidth = 0.5)
+for i in visctime:  #Vertical lines at each viscous timescale
+    plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
 plt.legend()
 
 
@@ -464,18 +488,23 @@ plt.plot(np.arange(0,len(cor),1),cor)
 
 freq, PSD = PSD_continuous(T,M_total_soft)
 
+
 fig3 = plt.figure(3, figsize=(7, 7))
 plt.title('PSD at for total light curve soft')
 plt.xlabel('Frequency')
 plt.ylabel('f*P(f)')
 #plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
-plt.loglog(freq, PSD*freq, marker='x', markevery=5, linewidth=0.25, color='black') 
+
+
+ff=filter_factor(R, 1, 3)
+
+plt.loglog(freq, PSD*freq, linewidth=0.25, color='black') 
+
+plt.loglog(np.unique(freq), np.poly1d(np.polyfit(freq, PSD*freq, 3))(np.unique(freq)))
 viscfreq = viscous_frequency(R)
 
 for i in viscfreq:
     plt.axvline(x = i, linewidth = 1.0, linestyle='--')
-
-
 
 
 
