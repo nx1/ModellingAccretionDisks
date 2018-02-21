@@ -301,6 +301,14 @@ def filter_factor(R, rf, gamma):
     filter_factor = (flux_rf/flux_tot)**2.
     return filter_factor
 
+def calc_area_full(R):
+    '''
+    Calculates the area of annuli from list of radii
+    Returns len(R) - 1 list of areas
+    '''
+    A = np.array([np.pi * (R[i+1] ** 2. - R[i] ** 2.) for i in range (len(R)-1)])
+    A = np.insert(A,0,np.pi*R[0]**2)     
+    return A
 #================================================#
 #====================CONSTANTS===================#
 #================================================#
@@ -312,7 +320,7 @@ M_0_start = 1.0 #Starting M_0 at outermost radius
 '''Arvelo and Uttley fix the first innermost radius at 6 Units
 The number of annuli considered is also N = 1000
 '''
-N = 5      #Number of Radii
+N = 30      #Number of Radii
 Rmin = 1.0  #Minimum (starting) Radius
 Rmax = 10.0
 
@@ -432,38 +440,39 @@ print '========================================'
 em_soft = emissivity(R,3)  #Calculates emissivity at every radius (soft)
 em_hard = emissivity(R,5)  #Calculates emissivity at every radius (hard)
 
-em_soft_avg = average_arr(em_soft)
-em_hard_avg = average_arr(em_hard)
+#em_soft_avg = average_arr(em_soft)
+#em_hard_avg = average_arr(em_hard)
 
-area = calc_area(R)
+area = calc_area_full(R)
 
-flux_soft = area * em_soft_avg
-flux_hard = area * em_hard_avg
+flux_soft = area * em_soft
+flux_hard = area * em_hard
 
 M_shifted = shift_M_dot(M)
 
-M_scaled_soft = np.empty((N-1, len(M[0])))   #Used to store the new scaled lightcurves
-M_scaled_hard = np.empty((N-1, len(M[0])))   #Used to store the new scaled lightcurves
+M_scaled_soft = np.empty((N, len(M_shifted[0])))   #Used to store the new scaled lightcurves
+M_scaled_hard = np.empty((N, len(M_shifted[0])))   #Used to store the new scaled lightcurves
 
-
-
-for i in range(N-1):
-    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M[i]    #normalised to 1
-    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M[i]    #normalised to 1
-
+for i in range(N):
+    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M_shifted[i]    #normalised to 1
+    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M_shifted[i]    #normalised to 1
 
 M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
 M_total_hard = np.sum(M_scaled_hard, axis=0) / np.max(np.sum(M_scaled_hard, axis=0))
 
+M_total_soft = M_total_soft[ViscMax+1:]
+M_total_hard = M_total_hard[ViscMax+1:]
 
 fig4 = plt.figure(4, figsize=(7, 4))
 plt.title('Lightcurve from emissivity for soft/hard state')
 plt.xlabel('Time')
 plt.ylabel('Count')
 
-#T = np.arange(0,len(M_total_soft),1)
+T = np.arange(0,len(M_total_soft),1)
 
 #sum of all radii is total contribution
+
+
 plt.plot(T,M_total_soft, label='soft', color='black', linewidth = 0.5) 
 plt.plot(T,M_total_hard, label='hard', color='red', linewidth = 0.5)
 for i in visctime:  #Vertical lines at each viscous timescale
@@ -496,7 +505,7 @@ plt.ylabel('f*P(f)')
 #plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
 
 
-ff=filter_factor(R, 1, 3)
+#ff=filter_factor(R, 1, 3)
 
 plt.loglog(freq, PSD*freq, linewidth=0.25, color='black') 
 
