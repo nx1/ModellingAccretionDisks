@@ -460,18 +460,20 @@ for i in range(N):
 M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
 M_total_hard = np.sum(M_scaled_hard, axis=0) / np.max(np.sum(M_scaled_hard, axis=0))
 
-M_total_soft = M_total_soft[ViscMax+1:]
-M_total_hard = M_total_hard[ViscMax+1:]
+M_total_soft = M_total_soft[ViscMax:len(M_total_soft)-ViscMax]
+M_total_hard = M_total_hard[ViscMax:len(M_total_hard)-ViscMax]
+
+T = np.arange(0,len(M_total_soft),1)
+
+
+
+#sum of all radii is total contribution
+
 
 fig4 = plt.figure(4, figsize=(7, 4))
 plt.title('Lightcurve from emissivity for soft/hard state')
 plt.xlabel('Time')
 plt.ylabel('Count')
-
-T = np.arange(0,len(M_total_soft),1)
-
-#sum of all radii is total contribution
-
 
 plt.plot(T,M_total_soft, label='soft', color='black', linewidth = 0.5) 
 plt.plot(T,M_total_hard, label='hard', color='red', linewidth = 0.5)
@@ -486,6 +488,73 @@ fig6 = plt.figure(6, figsize=(7, 4))
 
 plt.plot(np.arange(0,len(cor),1),cor)
 
+
+
+
+'''
+#########################SUMMING INNER/OUTER####################
+M_shifted_outter = np.sum(M_shifted[15:], axis=0)
+M_shifted_inner = np.sum(M_shifted[:15], axis=0)
+
+M_shifted_outter_total = M_shifted_outter[ViscMax+1:len(M_total_soft)-ViscMax]
+M_shifted_inner_total = M_shifted_inner[ViscMax+1:len(M_total_soft)-ViscMax]
+
+T = np.arange(0,len(M_shifted_inner_total),1)
+
+fig4 = plt.figure(4, figsize=(7, 4))
+plt.title('Lightcurve for inner/outter state')
+plt.xlabel('Time')
+plt.ylabel('Count')
+
+plt.plot(T,M_shifted_inner_total, label='inner', color='black', linewidth = 0.5) 
+plt.plot(T,M_shifted_outter_total, label='outter', color='red', linewidth = 0.5)
+
+for i in visctime:  #Vertical lines at each viscous timescale
+    plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
+
+
+plt.legend()
+cor=np.correlate(M_shifted_inner_total,M_shifted_outter_total, mode='full')
+
+fig6 = plt.figure(6, figsize=(7, 4))
+
+plt.plot(np.arange(0,len(cor),1),cor)
+'''
+
+
+
+
+'''
+#########################Not summing INNER/OUTER####################
+M_shifted_inner = M_shifted[0]
+M_shifted_outter = M_shifted[-1]
+
+M_shifted_outter_total = M_shifted_outter[ViscMax+1:len(M_total_soft)-ViscMax]
+M_shifted_inner_total = M_shifted_inner[ViscMax+1:len(M_total_soft)-ViscMax]
+
+T = np.arange(0,len(M_shifted_inner_total),1)
+
+fig4 = plt.figure(4, figsize=(7, 4))
+plt.title('Lightcurve for inner/outter state')
+plt.xlabel('Time')
+plt.ylabel('Count')
+
+plt.plot(T,M_shifted_inner_total, label='inner', color='black', linewidth = 0.5) 
+plt.plot(T,M_shifted_outter_total, label='outter', color='red', linewidth = 0.5)
+
+for i in visctime:  #Vertical lines at each viscous timescale
+    plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
+
+
+plt.legend()
+cor=np.correlate(M_shifted_inner_total,M_shifted_outter_total, mode='full')
+
+fig6 = plt.figure(6, figsize=(7, 4))
+
+plt.plot(np.arange(0,len(cor),1),cor)
+'''
+
+
 #plt.legend()
 
 ########################################################
@@ -496,10 +565,12 @@ plt.plot(np.arange(0,len(cor),1),cor)
 ############ PSD ############
 
 freq, PSD = PSD_continuous(T,M_total_soft)
+freq1, PSD1 = PSD_continuous(T,M_total_hard)
+
 
 
 fig3 = plt.figure(3, figsize=(7, 7))
-plt.title('PSD at for total light curve soft')
+plt.title('PSD at for total light curve soft/hard')
 plt.xlabel('Frequency')
 plt.ylabel('f*P(f)')
 #plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
@@ -507,9 +578,11 @@ plt.ylabel('f*P(f)')
 
 #ff=filter_factor(R, 1, 3)
 
-plt.loglog(freq, PSD*freq, linewidth=0.25, color='black') 
+plt.loglog(freq, PSD*freq, linewidth=0.25, color='black', label = 'soft') 
+plt.loglog(freq1, PSD1*freq1, linewidth=0.25, color='red', label = 'hard') 
+plt.legend()
 
-plt.loglog(np.unique(freq), np.poly1d(np.polyfit(freq, PSD*freq, 3))(np.unique(freq)))
+#plt.loglog(np.unique(freq), np.poly1d(np.polyfit(freq, PSD*freq, 3))(np.unique(freq)))
 viscfreq = viscous_frequency(R)
 
 for i in viscfreq:
