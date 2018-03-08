@@ -265,7 +265,7 @@ def shift_M_dot(M_dot):
     print 'deltaT:', deltaT
     print 'append:', deltaT_append
         
-    M_shifted = np.empty((N, len(M_dot[0]) + deltaT[0]))
+    M_shifted = np.empty((N, int(len(M_dot[0]) + deltaT[0])))
     print 'M_dot length:', 
     print 'M_shifted length:', len(M_shifted[0])
     print 'MDOT'
@@ -274,8 +274,8 @@ def shift_M_dot(M_dot):
         print 'MDOT', r
         print M_dot[r]
         
-        M_inserted = np.insert(M_dot[r], 0, np.zeros(deltaT[r]))     
-        M_shifted[r] = np.append(M_inserted, np.zeros(deltaT_append[r]))
+        M_inserted = np.insert(M_dot[r], 0, np.zeros(int(deltaT[r])))     
+        M_shifted[r] = np.append(M_inserted, np.zeros(int(deltaT_append[r])))
 
     return M_shifted
 
@@ -460,8 +460,8 @@ for i in range(N):
 M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
 M_total_hard = np.sum(M_scaled_hard, axis=0) / np.max(np.sum(M_scaled_hard, axis=0))
 
-M_total_soft = M_total_soft[ViscMax:len(M_total_soft)-ViscMax]
-M_total_hard = M_total_hard[ViscMax:len(M_total_hard)-ViscMax]
+M_total_soft = M_total_soft[int(ViscMax):len(M_total_soft)-int(ViscMax)+1]
+M_total_hard = M_total_hard[int(ViscMax):len(M_total_hard)-int(ViscMax)+1]
 
 T = np.arange(0,len(M_total_soft),1)
 
