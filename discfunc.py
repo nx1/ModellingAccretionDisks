@@ -482,12 +482,13 @@ for i in visctime:  #Vertical lines at each viscous timescale
 plt.legend()
 
 
+'''
 cor=np.correlate(M_total_soft,M_total_hard, mode='full')
 
 fig6 = plt.figure(6, figsize=(7, 4))
 
 plt.plot(np.arange(0,len(cor),1),cor)
-
+'''
 
 
 
