@@ -18,6 +18,7 @@ from astroML.time_series.generate import generate_power_law
 from astroML.fourier import PSD_continuous
 from scipy import stats
 from scipy import signal
+
 #seed = 5
 seed = int(100*np.random.random())
 np.random.seed(seed)
@@ -63,7 +64,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
     Q = Q_factor * viscous_frequency(R) Where Q factor is between 0.5 to 10
     Q = 10 produces a narrower PSD
     '''
-    print '--------- Calculating m_dot (small) ---------' 
+    print('--------- Calculating m_dot (small) ---------' )
     m_dot = np.empty((len(R), timeSteps))#Used to store rxt array of m_dot
     fVisc = viscous_frequency(R)
     
@@ -72,7 +73,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
         sigma_var = np.sqrt(F_var**2 / N)   #used to normalise over all annuli
 
         for i in range(len(R)): #Calculates m_dot for all radius and time
-            print 'Calculating m_dot | R =', i+1, '/', len(R)
+            print('Calculating m_dot | R =', i+1, '/', len(R))
             m_dot[i] = generate_power_law(timeSteps, 1.0, Q, fVisc[i])
             X = sigma_var / np.std(m_dot[i])    #Normalisation
             m_dot[i] = X * m_dot[i]             #Normalisation
@@ -81,7 +82,7 @@ def calc_m_dot(R, timeSteps, Q, sinusoid):
         for r in range(len(R)): #Calculates m_dot for all radius and time
             for t in range(timeSteps):
                 m_dot[r][t] = 0.1*np.sin(2.0 * np.pi * (fVisc[r]) * t)
-    print '---------------------DONE--------------------' 
+    print('---------------------DONE--------------------' )
         
     return m_dot
 
@@ -262,17 +263,17 @@ def shift_M_dot(M_dot):
         deltaT[i] = int(ViscTimeMax - ViscTime[i])
         deltaT_append[i] = deltaT[0] - deltaT[i]
         
-    print 'deltaT:', deltaT
-    print 'append:', deltaT_append
+    print('deltaT:', deltaT)
+    print('append:', deltaT_append)
         
     M_shifted = np.empty((N, int(len(M_dot[0]) + deltaT[0])))
-    print 'M_dot length:', 
-    print 'M_shifted length:', len(M_shifted[0])
-    print 'MDOT'
-    print M_dot
+    print('M_dot length:')
+    print('M_shifted length:', len(M_shifted[0]))
+    print('MDOT')
+    print(M_dot)
     for r in range(N):
-        print 'MDOT', r
-        print M_dot[r]
+        print('MDOT', r)
+        print(M_dot[r])
         
         M_inserted = np.insert(M_dot[r], 0, np.zeros(int(deltaT[r])))     
         M_shifted[r] = np.append(M_inserted, np.zeros(int(deltaT_append[r])))
@@ -350,23 +351,23 @@ m_dot = calc_m_dot(R, tMax, Q, sinusoid)
 #=======================MAIN=====================#
 #================================================#
 time0 = time()
-print ''
-print 'radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor, '| ViscMax', ViscMax
-print '---------------------------------------------'   
-print ''                    
-print '============== DISK PARAMETERS =============='
+print('')
+print('radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor, '| ViscMax', ViscMax)
+print('---------------------------------------------') 
+print('')
+print('============== DISK PARAMETERS ==============')
 np.set_printoptions(precision = 2, linewidth = 100)
-print 'Number of radii:', N
-print 'alphas:', alpha
-print 'Radii:         ', R
-print 'visc_timescale:', viscous_timescale(R)
+print('Number of radii:', N)
+print('alphas:', alpha)
+print('Radii:         ', R)
+print('visc_timescale:', viscous_timescale(R))
 np.set_printoptions(precision = 4, linewidth = 100)
-print 'visc_freq:     ', viscous_frequency(R)
-print 'visc_vel:      ', viscous_velocity(R)
-print 'M_dot:         ', M_dot(R, 1, M_0_start)
-print '============================================='
-print ''
-print '############# CALCULATING M_DOT #############'
+print('visc_freq:     ', viscous_frequency(R))
+print('visc_vel:      ', viscous_velocity(R))
+print('M_dot:         ', M_dot(R, 1, M_0_start))
+print('=============================================')
+print('')
+print('############# CALCULATING M_DOT #############')
 
 
 
@@ -383,7 +384,7 @@ for t in np.arange(0,tMax,1):
     M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
     percents = round(100.0 * t / float(tMax), 4)
     if percents % 10.00==0:
-       print percents, '%', '|Calculating M_dot| t =', t, '/', tMax
+       print(percents, '%', '|Calculating M_dot| t =', t, '/', tMax)
   
 M = np.transpose(M)
 fig1 = plt.figure(1, figsize=(7, 4))  
@@ -398,8 +399,8 @@ plt.xlabel('time')
 plt.ylabel('Mass accretion at R[0]')     
 for i in range(N): plt.plot(T,M[i], linewidth=0.25, label='r = %d'%i)
 #plt.legend()
-print '#############################################'
-print ''
+print('#############################################')
+print('')
 
 
 ############-RMS vs Average Count Rate-############
@@ -426,13 +427,13 @@ plt.plot(np.unique(b_avg), np.poly1d(np.polyfit(b_avg, b_rms, 1))(np.unique(b_av
 plt.scatter(b_avg,b_rms, marker='x')
 
 slope, intercept, r_value, p_value, std_err = stats.linregress(b_avg,b_rms)
-print '========REGRESSION STATS FOR RMS========'
-print'slope:', slope
-print 'intercept:', intercept
-print 'r_value:', r_value
-print 'p_value:', p_value
-print 'std_err:', std_err
-print '========================================'
+print('========REGRESSION STATS FOR RMS========')
+print('slope:', slope)
+print('intercept:', intercept)
+print('r_value:', r_value)
+print('p_value:', p_value)
+print('std_err:', std_err)
+print('========================================')
 
 
 ############# Light Curves From Emissivity #############
@@ -568,8 +569,6 @@ plt.plot(np.arange(0,len(cor),1),cor)
 freq, PSD = PSD_continuous(T,M_total_soft)
 freq1, PSD1 = PSD_continuous(T,M_total_hard)
 
-
-
 fig3 = plt.figure(3, figsize=(7, 7))
 plt.title('PSD at for total light curve soft/hard')
 plt.xlabel('Frequency')
@@ -606,7 +605,7 @@ plt.legend()
 
 plt.show()
 time1 = time()
-print 'Time taken', time1-time0, '| seed:', seed
+print('Time taken', time1-time0, '| seed:', seed)
     
 '''
 ############ PSD for m_dot ############
