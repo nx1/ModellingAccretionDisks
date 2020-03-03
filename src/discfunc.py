@@ -17,7 +17,6 @@ from time import time #remove once finished
 from astroML.time_series.generate import generate_power_law
 from astroML.fourier import PSD_continuous
 from scipy import stats
-from scipy import signal
 
 #seed = 5
 seed = int(100*np.random.random())
@@ -26,6 +25,8 @@ np.random.seed(seed)
 #================================================#
 #====================FUNCTIONS===================#
 #================================================#
+
+
 
 def create_disc (N,Rmin,Rmax):
     '''
@@ -310,6 +311,8 @@ def calc_area_full(R):
     A = np.array([np.pi * (R[i+1] ** 2. - R[i] ** 2.) for i in range (len(R)-1)])
     A = np.insert(A,0,np.pi*R[0]**2)     
     return A
+
+
 #================================================#
 #====================CONSTANTS===================#
 #================================================#
@@ -328,8 +331,6 @@ Rmax = 10.0
 Q = 0.5  #Q is defined as the ratio of lorenzian peak freqency to FWHM
 tMax_factor = 10.1   #Number of maximum viscous timescales to calculate to
 
-
-
 #==================Variables=====================#
 R = create_disc(N, Rmin, Rmax)
 #alpha = 0.1*np.ones(len(R))
@@ -344,284 +345,271 @@ sinusoid = False    #Creates m_dot as either sinusoids or timmer and koenig
           
 m_dot = calc_m_dot(R, tMax, Q, sinusoid)    
     
-    
-    
-    
+
 #================================================#
 #=======================MAIN=====================#
 #================================================#
-time0 = time()
-print('')
-print('radii:', len(R), '| tMax:', tMax, '| tMax factor:', tMax_factor, '| ViscMax', ViscMax)
-print('---------------------------------------------') 
-print('')
-print('============== DISK PARAMETERS ==============')
-np.set_printoptions(precision = 2, linewidth = 100)
-print('Number of radii:', N)
-print('alphas:', alpha)
-print('Radii:         ', R)
-print('visc_timescale:', viscous_timescale(R))
-np.set_printoptions(precision = 4, linewidth = 100)
-print('visc_freq:     ', viscous_frequency(R))
-print('visc_vel:      ', viscous_velocity(R))
-print('M_dot:         ', M_dot(R, 1, M_0_start))
-print('=============================================')
-print('')
-print('############# CALCULATING M_DOT #############')
-
-
-
-
-############-Count Rate vs Time-############
-
-
-M=np.empty((tMax,N))
-T=np.arange(tMax)
-
-for t in np.arange(0,tMax,1):   
+if __name__ == "__main__":
+    time0 = time()
     
-    #M[t] = M_dot(R, t, M_0_start)
-    M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
-    percents = round(100.0 * t / float(tMax), 4)
-    if percents % 10.00==0:
-       print(percents, '%', '|Calculating M_dot| t =', t, '/', tMax)
-  
-M = np.transpose(M)
-fig1 = plt.figure(1, figsize=(7, 4))  
-
-visctime = viscous_timescale(R)
-
-for i in visctime:  #Vertical lines at each viscous timescale
-    plt.axvline(x = i, linewidth = 0.25, color='green')
-
-plt.title('Mass accretion rate(s) for disk of %d radii' %N)  
-plt.xlabel('time')
-plt.ylabel('Mass accretion at R[0]')     
-for i in range(N): plt.plot(T,M[i], linewidth=0.25, label='r = %d'%i)
-#plt.legend()
-print('#############################################')
-print('')
-
-
-############-RMS vs Average Count Rate-############
-
-a = np.array_split(T, len(T)/(tMax/10))
-count_bin = np.array_split(M[0], len(M[0])/(tMax/10))
-
-b_avg = np.empty(len(a))
-b_rms = np.empty(len(a))
-
-for i in range(len(a)):
-    b_avg[i] = np.average(count_bin[i])
-    #print 'bavg:', b_avg
-    b_rms[i] = np.sqrt(np.average(count_bin[i] ** 2))
-    #print 'brms:', b_rms
-
-
-fig2 = plt.figure(2, figsize=(7, 7)) 
-plt.xlabel('Average count rate')
-plt.ylabel('rms') 
-
-plt.plot(np.unique(b_avg), np.poly1d(np.polyfit(b_avg, b_rms, 1))(np.unique(b_avg)), color='r')
-
-plt.scatter(b_avg,b_rms, marker='x')
-
-slope, intercept, r_value, p_value, std_err = stats.linregress(b_avg,b_rms)
-print('========REGRESSION STATS FOR RMS========')
-print('slope:', slope)
-print('intercept:', intercept)
-print('r_value:', r_value)
-print('p_value:', p_value)
-print('std_err:', std_err)
-print('========================================')
-
-
-############# Light Curves From Emissivity #############
-
-em_soft = emissivity(R,3)  #Calculates emissivity at every radius (soft)
-em_hard = emissivity(R,5)  #Calculates emissivity at every radius (hard)
-
-#em_soft_avg = average_arr(em_soft)
-#em_hard_avg = average_arr(em_hard)
-
-area = calc_area_full(R)
-
-flux_soft = area * em_soft
-flux_hard = area * em_hard
-
-M_shifted = shift_M_dot(M)
-
-M_scaled_soft = np.empty((N, len(M_shifted[0])))   #Used to store the new scaled lightcurves
-M_scaled_hard = np.empty((N, len(M_shifted[0])))   #Used to store the new scaled lightcurves
-
-for i in range(N):
-    M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M_shifted[i]    #normalised to 1
-    M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M_shifted[i]    #normalised to 1
-
-M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
-M_total_hard = np.sum(M_scaled_hard, axis=0) / np.max(np.sum(M_scaled_hard, axis=0))
-
-M_total_soft = M_total_soft[int(ViscMax):len(M_total_soft)-int(ViscMax)+1]
-M_total_hard = M_total_hard[int(ViscMax):len(M_total_hard)-int(ViscMax)+1]
-
-T = np.arange(0,len(M_total_soft),1)
-
-
-
-#sum of all radii is total contribution
-
-
-fig4 = plt.figure(4, figsize=(7, 4))
-plt.title('Lightcurve from emissivity for soft/hard state')
-plt.xlabel('Time')
-plt.ylabel('Count')
-
-plt.plot(T,M_total_soft, label='soft', color='black', linewidth = 0.5) 
-plt.plot(T,M_total_hard, label='hard', color='red', linewidth = 0.5)
-for i in visctime:  #Vertical lines at each viscous timescale
-    plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
-plt.legend()
-
-
-'''
-cor=np.correlate(M_total_soft,M_total_hard, mode='full')
-
-fig6 = plt.figure(6, figsize=(7, 4))
-
-plt.plot(np.arange(0,len(cor),1),cor)
-'''
-
-
-
-'''
-#########################SUMMING INNER/OUTER####################
-M_shifted_outter = np.sum(M_shifted[15:], axis=0)
-M_shifted_inner = np.sum(M_shifted[:15], axis=0)
-
-M_shifted_outter_total = M_shifted_outter[ViscMax+1:len(M_total_soft)-ViscMax]
-M_shifted_inner_total = M_shifted_inner[ViscMax+1:len(M_total_soft)-ViscMax]
-
-T = np.arange(0,len(M_shifted_inner_total),1)
-
-fig4 = plt.figure(4, figsize=(7, 4))
-plt.title('Lightcurve for inner/outter state')
-plt.xlabel('Time')
-plt.ylabel('Count')
-
-plt.plot(T,M_shifted_inner_total, label='inner', color='black', linewidth = 0.5) 
-plt.plot(T,M_shifted_outter_total, label='outter', color='red', linewidth = 0.5)
-
-for i in visctime:  #Vertical lines at each viscous timescale
-    plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
-
-
-plt.legend()
-cor=np.correlate(M_shifted_inner_total,M_shifted_outter_total, mode='full')
-
-fig6 = plt.figure(6, figsize=(7, 4))
-
-plt.plot(np.arange(0,len(cor),1),cor)
-'''
-
-
-
-
-'''
-#########################Not summing INNER/OUTER####################
-M_shifted_inner = M_shifted[0]
-M_shifted_outter = M_shifted[-1]
-
-M_shifted_outter_total = M_shifted_outter[ViscMax+1:len(M_total_soft)-ViscMax]
-M_shifted_inner_total = M_shifted_inner[ViscMax+1:len(M_total_soft)-ViscMax]
-
-T = np.arange(0,len(M_shifted_inner_total),1)
-
-fig4 = plt.figure(4, figsize=(7, 4))
-plt.title('Lightcurve for inner/outter state')
-plt.xlabel('Time')
-plt.ylabel('Count')
-
-plt.plot(T,M_shifted_inner_total, label='inner', color='black', linewidth = 0.5) 
-plt.plot(T,M_shifted_outter_total, label='outter', color='red', linewidth = 0.5)
-
-for i in visctime:  #Vertical lines at each viscous timescale
-    plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
-
-
-plt.legend()
-cor=np.correlate(M_shifted_inner_total,M_shifted_outter_total, mode='full')
-
-fig6 = plt.figure(6, figsize=(7, 4))
-
-plt.plot(np.arange(0,len(cor),1),cor)
-'''
-
-
-#plt.legend()
-
-########################################################
-
-
-
-
-############ PSD ############
-
-freq, PSD = PSD_continuous(T,M_total_soft)
-freq1, PSD1 = PSD_continuous(T,M_total_hard)
-
-fig3 = plt.figure(3, figsize=(7, 7))
-plt.title('PSD at for total light curve soft/hard')
-plt.xlabel('Frequency')
-plt.ylabel('f*P(f)')
-#plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
-
-
-#ff=filter_factor(R, 1, 3)
-
-plt.loglog(freq, PSD*freq, linewidth=0.25, color='black', label = 'soft') 
-plt.loglog(freq1, PSD1*freq1, linewidth=0.25, color='red', label = 'hard') 
-plt.legend()
-
-#plt.loglog(np.unique(freq), np.poly1d(np.polyfit(freq, PSD*freq, 3))(np.unique(freq)))
-viscfreq = viscous_frequency(R)
-
-for i in viscfreq:
-    plt.axvline(x = i, linewidth = 1.0, linestyle='--')
-
-
-
-'''
-############# Light Curves From Blackbody #############
-
-fig5 = plt.figure(5, figsize=(7, 4))
-plt.xlabel('Radius')
-plt.ylabel('flux')
-for i in np.arange(0, 10. , 1.):
-    flux2 = calc_flux(R,i)
-    plt.plot(R[:-1],np.transpose(flux2)[0], label=i)
-plt.legend()
-'''
-
-
-plt.show()
-time1 = time()
-print('Time taken', time1-time0, '| seed:', seed)
+    print(f'radii: {len(R)} | tMax: {tMax} | tMax factor: {tMax_factor} | ViscMax: {ViscMax}')
+    print('============== DISK PARAMETERS ==============')
+    print(f'Number of radii: {N}')
+    print(f'alphas: {alpha}')
+    print(f'Radii: {R}')
+    print(f'visc_timescale: {viscous_timescale(R)}')
+    print(f'visc_freq: {viscous_frequency(R)}')
+    print(f'visc_vel: {viscous_velocity(R)}')
+    print(f'M_dot: {M_dot(R, 1, M_0_start)}')
+    print(f'############# CALCULATING M_DOT #############')
+          
+    ############-Count Rate vs Time-############
+    M=np.empty((tMax,N))
+    T=np.arange(tMax)
     
-'''
-############ PSD for m_dot ############
-radius = 0
-freq1, PSD1 = PSD_continuous(T,m_dot[radius])
-
-fig8 = plt.figure(8, figsize=(7, 7))
-plt.title('PSD for m_dot[%s]' %radius)
-plt.xlabel('Frequency')
-plt.ylabel('f*P(f)')
-plt.loglog(freq1,PSD1*freq1, linewidth=0.25, color='black')
-viscfreq = viscous_frequency(R)
-
-for i in viscfreq:
-    if i == viscfreq[radius]:
-        plt.axvline(x = i, linewidth = 1.0, color='red', linestyle='--')
-    else:
+    for t in np.arange(0,tMax,1):   
+        #M[t] = M_dot(R, t, M_0_start)
+        M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
+        percents = round(100.0 * t / float(tMax), 4)
+        if percents % 10.00==0:
+           print(percents, '%', '|Calculating M_dot| t =', t, '/', tMax)
+      
+    M = np.transpose(M)
+    fig1 = plt.figure(1, figsize=(7, 4))  
+    
+    visctime = viscous_timescale(R)
+    
+    for i in visctime:  #Vertical lines at each viscous timescale
+        plt.axvline(x = i, linewidth = 0.25, color='green')
+    
+    plt.title('Mass accretion rate(s) for disk of %d radii' %N)  
+    plt.xlabel('time')
+    plt.ylabel('Mass accretion at R[0]')     
+    for i in range(N): plt.plot(T,M[i], linewidth=0.25, label='r = %d'%i)
+    #plt.legend()
+    print('#############################################')
+    print('')
+    
+    
+    ############-RMS vs Average Count Rate-############
+    
+    a = np.array_split(T, len(T)/(tMax/10))
+    count_bin = np.array_split(M[0], len(M[0])/(tMax/10))
+    
+    b_avg = np.empty(len(a))
+    b_rms = np.empty(len(a))
+    
+    for i in range(len(a)):
+        b_avg[i] = np.average(count_bin[i])
+        #print 'bavg:', b_avg
+        b_rms[i] = np.sqrt(np.average(count_bin[i] ** 2))
+        #print 'brms:', b_rms
+    
+    
+    fig2 = plt.figure(2, figsize=(7, 7)) 
+    plt.xlabel('Average count rate')
+    plt.ylabel('rms') 
+    
+    plt.plot(np.unique(b_avg), np.poly1d(np.polyfit(b_avg, b_rms, 1))(np.unique(b_avg)), color='r')
+    
+    plt.scatter(b_avg,b_rms, marker='x')
+    
+    slope, intercept, r_value, p_value, std_err = stats.linregress(b_avg,b_rms)
+    print('========REGRESSION STATS FOR RMS========')
+    print('slope:', slope)
+    print('intercept:', intercept)
+    print('r_value:', r_value)
+    print('p_value:', p_value)
+    print('std_err:', std_err)
+    print('========================================')
+    
+    
+    ############# Light Curves From Emissivity #############
+    
+    em_soft = emissivity(R,3)  #Calculates emissivity at every radius (soft)
+    em_hard = emissivity(R,5)  #Calculates emissivity at every radius (hard)
+    
+    #em_soft_avg = average_arr(em_soft)
+    #em_hard_avg = average_arr(em_hard)
+    
+    area = calc_area_full(R)
+    
+    flux_soft = area * em_soft
+    flux_hard = area * em_hard
+    
+    M_shifted = shift_M_dot(M)
+    
+    M_scaled_soft = np.empty((N, len(M_shifted[0])))   #Used to store the new scaled lightcurves
+    M_scaled_hard = np.empty((N, len(M_shifted[0])))   #Used to store the new scaled lightcurves
+    
+    for i in range(N):
+        M_scaled_soft[i] = flux_soft[i]/max(flux_soft) * M_shifted[i]    #normalised to 1
+        M_scaled_hard[i] = flux_hard[i]/max(flux_hard) * M_shifted[i]    #normalised to 1
+    
+    M_total_soft = np.sum(M_scaled_soft, axis=0) / np.max(np.sum(M_scaled_soft, axis=0))
+    M_total_hard = np.sum(M_scaled_hard, axis=0) / np.max(np.sum(M_scaled_hard, axis=0))
+    
+    M_total_soft = M_total_soft[int(ViscMax):len(M_total_soft)-int(ViscMax)+1]
+    M_total_hard = M_total_hard[int(ViscMax):len(M_total_hard)-int(ViscMax)+1]
+    
+    T = np.arange(0,len(M_total_soft),1)
+    
+    
+    
+    #sum of all radii is total contribution
+    
+    
+    fig4 = plt.figure(4, figsize=(7, 4))
+    plt.title('Lightcurve from emissivity for soft/hard state')
+    plt.xlabel('Time')
+    plt.ylabel('Count')
+    
+    plt.plot(T,M_total_soft, label='soft', color='black', linewidth = 0.5) 
+    plt.plot(T,M_total_hard, label='hard', color='red', linewidth = 0.5)
+    for i in visctime:  #Vertical lines at each viscous timescale
+        plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
+    plt.legend()
+    
+    
+    '''
+    cor=np.correlate(M_total_soft,M_total_hard, mode='full')
+    
+    fig6 = plt.figure(6, figsize=(7, 4))
+    
+    plt.plot(np.arange(0,len(cor),1),cor)
+    '''
+    
+    
+    
+    '''
+    #########################SUMMING INNER/OUTER####################
+    M_shifted_outter = np.sum(M_shifted[15:], axis=0)
+    M_shifted_inner = np.sum(M_shifted[:15], axis=0)
+    
+    M_shifted_outter_total = M_shifted_outter[ViscMax+1:len(M_total_soft)-ViscMax]
+    M_shifted_inner_total = M_shifted_inner[ViscMax+1:len(M_total_soft)-ViscMax]
+    
+    T = np.arange(0,len(M_shifted_inner_total),1)
+    
+    fig4 = plt.figure(4, figsize=(7, 4))
+    plt.title('Lightcurve for inner/outter state')
+    plt.xlabel('Time')
+    plt.ylabel('Count')
+    
+    plt.plot(T,M_shifted_inner_total, label='inner', color='black', linewidth = 0.5) 
+    plt.plot(T,M_shifted_outter_total, label='outter', color='red', linewidth = 0.5)
+    
+    for i in visctime:  #Vertical lines at each viscous timescale
+        plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
+    
+    
+    plt.legend()
+    cor=np.correlate(M_shifted_inner_total,M_shifted_outter_total, mode='full')
+    
+    fig6 = plt.figure(6, figsize=(7, 4))
+    
+    plt.plot(np.arange(0,len(cor),1),cor)
+    '''
+    
+    
+    
+    
+    '''
+    #########################Not summing INNER/OUTER####################
+    M_shifted_inner = M_shifted[0]
+    M_shifted_outter = M_shifted[-1]
+    
+    M_shifted_outter_total = M_shifted_outter[ViscMax+1:len(M_total_soft)-ViscMax]
+    M_shifted_inner_total = M_shifted_inner[ViscMax+1:len(M_total_soft)-ViscMax]
+    
+    T = np.arange(0,len(M_shifted_inner_total),1)
+    
+    fig4 = plt.figure(4, figsize=(7, 4))
+    plt.title('Lightcurve for inner/outter state')
+    plt.xlabel('Time')
+    plt.ylabel('Count')
+    
+    plt.plot(T,M_shifted_inner_total, label='inner', color='black', linewidth = 0.5) 
+    plt.plot(T,M_shifted_outter_total, label='outter', color='red', linewidth = 0.5)
+    
+    for i in visctime:  #Vertical lines at each viscous timescale
+        plt.axvline(x = i, linewidth = 1.0, color='green', linestyle='--') 
+    
+    
+    plt.legend()
+    cor=np.correlate(M_shifted_inner_total,M_shifted_outter_total, mode='full')
+    
+    fig6 = plt.figure(6, figsize=(7, 4))
+    
+    plt.plot(np.arange(0,len(cor),1),cor)
+    '''
+    
+    
+    #plt.legend()
+    
+    ########################################################
+    
+    
+    
+    
+    ############ PSD ############
+    
+    freq, PSD = PSD_continuous(T,M_total_soft)
+    freq1, PSD1 = PSD_continuous(T,M_total_hard)
+    
+    fig3 = plt.figure(3, figsize=(7, 7))
+    plt.title('PSD at for total light curve soft/hard')
+    plt.xlabel('Frequency')
+    plt.ylabel('f*P(f)')
+    #plt.loglog(freq,PSD*freq, linewidth=0.25, color='black')
+    
+    
+    #ff=filter_factor(R, 1, 3)
+    
+    plt.loglog(freq, PSD*freq, linewidth=0.25, color='black', label = 'soft') 
+    plt.loglog(freq1, PSD1*freq1, linewidth=0.25, color='red', label = 'hard') 
+    plt.legend()
+    
+    #plt.loglog(np.unique(freq), np.poly1d(np.polyfit(freq, PSD*freq, 3))(np.unique(freq)))
+    viscfreq = viscous_frequency(R)
+    
+    for i in viscfreq:
         plt.axvline(x = i, linewidth = 1.0, linestyle='--')
-'''
+    
+    
+    
+    '''
+    ############# Light Curves From Blackbody #############
+    
+    fig5 = plt.figure(5, figsize=(7, 4))
+    plt.xlabel('Radius')
+    plt.ylabel('flux')
+    for i in np.arange(0, 10. , 1.):
+        flux2 = calc_flux(R,i)
+        plt.plot(R[:-1],np.transpose(flux2)[0], label=i)
+    plt.legend()
+    '''
+    
+    
+    plt.show()
+    time1 = time()
+    print('Time taken', time1-time0, '| seed:', seed)
+        
+    '''
+    ############ PSD for m_dot ############
+    radius = 0
+    freq1, PSD1 = PSD_continuous(T,m_dot[radius])
+    
+    fig8 = plt.figure(8, figsize=(7, 7))
+    plt.title('PSD for m_dot[%s]' %radius)
+    plt.xlabel('Frequency')
+    plt.ylabel('f*P(f)')
+    plt.loglog(freq1,PSD1*freq1, linewidth=0.25, color='black')
+    viscfreq = viscous_frequency(R)
+    
+    for i in viscfreq:
+        if i == viscfreq[radius]:
+            plt.axvline(x = i, linewidth = 1.0, color='red', linestyle='--')
+        else:
+            plt.axvline(x = i, linewidth = 1.0, linestyle='--')
+    '''
