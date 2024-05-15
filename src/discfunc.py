@@ -8,112 +8,193 @@ Created on Mon Oct  9 16:18:50 2017
 Authors: Vysakh Salil, Norman Khan
 
 This program contains a model for a fluctuating accretion disk based on 
-the model put forward by P. Arevalo and P. Uttley in 2005
+the model put forward by P. Arevalo and P. Uttley in 2005.
 DOI: 	10.1111/j.1365-2966.2006.09989.x
 """
+from time import time
 import numpy as np
 import matplotlib.pyplot as plt
-from time import time #remove once finished
-from astroML.time_series.generate import generate_power_law
-from astroML.fourier import PSD_continuous
 from scipy import stats
+#from astroML.time_series.generate import generate_power_law
+from astroML.fourier import PSD_continuous
 
-#seed = 5
-seed = int(100*np.random.random())
-np.random.seed(seed)
+def generate_power_law(N, dt, Q, fVisc, generate_complex=False, random_state=None):
+    """Generate a power-law light curve
 
-#================================================#
-#====================FUNCTIONS===================#
-#================================================#
+    This uses the method from Timmer & Koenig [1]_
+
+    Parameters
+    ----------
+    N : integer
+        Number of equal-spaced time steps to generate
+    dt : float
+        Spacing between time-steps
+    beta : float
+        Power-law index.  The spectrum will be (1 / f)^beta
+    Q: float
+        Q factor of Lorentzian peak
+    fVisc: float
+        Viscous frequency at given radius
+    generate_complex : boolean (optional)
+        if True, generate a complex time series rather than a real time series
+    random_state : None, int, or np.random.RandomState instance (optional)
+        random seed or random number generator
+
+    Returns
+    -------
+    x : ndarray
+        the length-N
+
+    References
+    ----------
+    .. [1] Timmer, J. & Koenig, M. On Generating Power Law Noise. A&A 300:707
+    """
+    random_state = np.random.RandomState(random_state)
+    dt = float(dt)
+    N = int(N)
+
+    Npos = int(N / 2)
+    Nneg = int((N - 1) / 2)
+    domega = (2 * np.pi / (N * dt))
+    
+    if generate_complex:
+        omega = domega * np.fft.ifftshift(np.arange(N) - int(N / 2))
+    else:
+        omega = domega * np.arange(Npos + 1)
+
+    
+    
+    GAMMA = fVisc/2*Q        #Gamma is 2x the FWHM for a standard cauchy distribution
+                             #In Arevalo and Uttley Q is defined as the 
+                             #Ratio of lorentzian peak frequency to FHWM    
+    
+    
+    x_fft = np.zeros(len(omega), dtype=complex)
+    Lorentzian = np.zeros(len(omega), dtype=complex)
+
+    x_fft.real[1:] = random_state.normal(0, 1, len(omega) - 1)
+    x_fft.imag[1:] = random_state.normal(0, 1, len(omega) - 1)
+
+    #Square root of Lorentzian with peak at fVisc
+    x_fft[1:] *= ( (GAMMA)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (GAMMA)**2.) )**0.5 #NEW
+    Lorentzian[1:] = ( (GAMMA)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (GAMMA)**2.) )**0.5 #To plot lorentzians
+
+    #x_fft[1:] *= 1./max(x_fft)
+    #x_fft[1:] *= ( (Q/2.)**2 / ((omega[1:] - (2.*np.pi*fVisc))**2. + (Q/2.)**2.) )**0.5 #old     
+    #x_fft[1:] *= (1. / np.sqrt(2))             #Some sort of normalisation
+    
+      
+    
+    
+    
+    # by symmetry, the Nyquist frequency is real if x is real
+    if (not generate_complex) and (N % 2 == 0):
+        x_fft.imag[-1] = 0
+    if generate_complex:
+        x = np.fft.ifft(x_fft)
+    else:
+        #x = ifft(x_fft, N)  #Slow for Large N
+        x = np.fft.ifft(x_fft, N)  #Slow for Large N
+        
+    fig7 = plt.figure(7, figsize=(7, 7))
+    plt.title('x_fft vs 2*pi*f')
+    plt.xlabel('2*pi*f')
+    plt.ylabel('x_fft')
+    plt.loglog(omega,Lorentzian, linewidth=1.0)  
+    plt.axvline(x = 2*np.pi*fVisc, linewidth = 1.0, color='green', linestyle='--')
+
+    return x
 
 
-
-def create_disc (N,Rmin,Rmax):
-    '''
+def create_disc(N, Rmin, Rmax):
+    """
     Creates a basic disc with constant ratio between radii
-    Returns a python list array.
     
-    inputs:
-        N       = Number of Annuli
-        Rmin    = Radii of innermost disc
-        Rmax    = Radii of outermost disc
-    '''
-    R = np.empty(N)
-    const = np.power(Rmax/Rmin, 1./(N-1))
-    
+    Parameters:
+        N (int): Number of Annuli
+        Rmin (float): Radii of innermost disc
+        Rmax (float): Radii of outermost disc
+    """
+    R     = np.empty(N)
+    exp   = 1.0 / (N-1)
+    const = np.power(Rmax/Rmin, exp)
+
     for i in range(N):
         R[i] = const**i * Rmin   
     return R
    
 
 def calc_m_dot(R, timeSteps, Q, sinusoid):
-    '''
+    """ 
     Calculates the local small mass accretion rate for all radius and time
     returns a 2 dimensional (len(R), timesteps) size ndarray
     
     Normalization is done by multiplying the output lightcurve by a factor
     X = sigma_var / standard deviation of m_dot
-    
-    inputs:
-        R = array of radii
-        timesteps = Number of equal-spaced time steps to generate 
-        Q = Quality factor Lorentzian peak freq / FWHM
-        
+ 
     Uses modifed Timmer and Koenig method from AstroML with a Lorentzian
     distribution peaked at the local viscous frequency for the PSD. 
     
     Q = Q_factor * viscous_frequency(R) Where Q factor is between 0.5 to 10
     Q = 10 produces a narrower PSD
-    '''
-    print('--------- Calculating m_dot (small) ---------' )
-    m_dot = np.empty((len(R), timeSteps))#Used to store rxt array of m_dot
+
+    
+    Parameters:
+        R (array): Array of radii.
+        timesteps (int): Number of equal-spaced time steps to generate.
+        Q (float): Quality factor Lorentzian peak freq / FWHM.
+    """
+    n_R   = len(R)
+    m_dot = np.empty((n_R, timeSteps)) # Used to store rxt array of m_dot
     fVisc = viscous_frequency(R)
+
+    print(f'n_R: {n_R} | timeSteps: {timeSteps} | Q: {Q} | sinusoid: {sinusoid}')
     
     if not sinusoid:
-        F_var = 0.1     #Value of F_var used for normalisation eg 0.1 = 10%
-        sigma_var = np.sqrt(F_var**2 / N)   #used to normalise over all annuli
+        F_var = 0.1                       # Value of F_var used for normalisation eg 0.1 = 10%
+        sigma_var = np.sqrt(F_var**2 / N) # Used to normalise over all annuli
 
-        for i in range(len(R)): #Calculates m_dot for all radius and time
-            print('Calculating m_dot | R =', i+1, '/', len(R))
+        for i in range(n_R):
+            #generate_power_law(N=timeSteps, dt=1.0, beta=1.0, fVisc=fVisc[i])
             m_dot[i] = generate_power_law(timeSteps, 1.0, Q, fVisc[i])
+            print(m_dot[i])
             X = sigma_var / np.std(m_dot[i])    #Normalisation
             m_dot[i] = X * m_dot[i]             #Normalisation
             
     else:
-        for r in range(len(R)): #Calculates m_dot for all radius and time
+        for r in range(n_R): #Calculates m_dot for all radius and time
             for t in range(timeSteps):
                 m_dot[r][t] = 0.1*np.sin(2.0 * np.pi * (fVisc[r]) * t)
-    print('---------------------DONE--------------------' )
-        
     return m_dot
 
 
-def M_dot(R,t,Mdot0):
-    '''
+def M_dot(R, t, Mdot0):
+    """
     Calculates the mass accretion at a given radii between two annuli
     
     using the equation:
         M(r) = Mdot0 * ∏(1+m(r))
         
-    where M(r) is the accretion rate at given radius
-    M(r) is refered to as Mdot
+    where M(r) is the accretion rate at given radius M(r) is refered to as Mdot
     
     Mdot0 is the outermost radius accretion rate 
     
     m_dot(r,t), the local small variation of mass at each radius
 
     inputs:
-        R         = Array of the radii
-        t         = time
-        Mdot0     = Outermost radius accretion rate
-    
-    '''
-    #
-    
+        R (array): Array of the radii
+        t (int): Time index
+        Mdot0 (float): Outermost radius accretion rate.
+
+    returns:
+        M_dot (array): Array of mass accretion rates at each radius
+    """
     Mdot = np.zeros(len(R))
     
-    for i in range(len(R)-1,-1,-1): #Runs through all annuli from out to in
-        #print 'Radius # ', i
+    for i in range(len(R)-1, -1, -1): #Runs through all annuli from out to in
+        print(f'Calculating M_dot | R = {i+1} / {len(R)}')
+        print(f'Mdot0: {Mdot0} | t={t} ')
+        print(f'm_dot: {m_dot[i][t]}')
         if i==(len(R)-1):
             Mdot[i]=Mdot0*(1.0 + m_dot[i][t])
         else:
@@ -122,49 +203,49 @@ def M_dot(R,t,Mdot0):
 
     
 def calc_alpha (R):
-    '''
+    """
     Calculates alpha for all radii
-    '''
+    """
     #alpha = np.array([np.random.uniform(0.01,0.1) for i in range(len(R))])
     alpha = 0.3
     return alpha
 
 
 def viscous_frequency(R):
-    '''
+    """
     Calculates the viscous frequency at a given radius
-    '''
+    """
     f_visc = viscous_velocity(R)/R
     return f_visc
 
 
 def viscous_velocity(R):
-    '''
+    """
     Calculates the viscous velocity at a given radius
     Also sometimes called the radial drift velocity.
-    '''
+    """
     vel_visc = 1/(2.0 * np.pi) * (R)**(-0.5)  *  (H_R_**2)  *  alpha
     return vel_visc
 
 
 def viscous_timescale (R):
-    '''
+    """
     Calculates the viscous timescale at a given radius
     From eq 5.62 Accretion power in astrophysics.
     Time taken for the process to propogate from annulus to centre
-    '''
+    """
     time_visc = R/viscous_velocity(R)
     return time_visc
 
 def dampen(M_dot, D):
-    '''
+    """
     Dampens an input of M_dot at each radii by a factor
     exp(-D) based as done in Arevalo and Uttley 2005
     
     inputs:
         M_dot = list of mass accretion rates at each radius
         D = Damping coefficient 
-    '''
+    """
     
     fourier = np.fft.fft(M_dot) * np.exp(-D)
     M_dot_new = np.fft.ifft(fourier)
@@ -173,24 +254,24 @@ def dampen(M_dot, D):
 
 
 def emissivity (R,gamma):
-    '''
+    """
     Calculates emissivity, which is used to find the flux of the disc
     as the mass accretion rate at a given radius is proportional to its
     emmissivity at that radius.
     
     gamma is used to probe different parts of the x-ray spectra, eg soft = 3
     hard = 5
-    '''
+    """
     em = (R**-gamma)*((R[0]/R)**0.5)
     return em
 
 
 def T_eff (R):
-    '''
+    """
     Caclulates the effective temperature of the disk at a given radius
     based off equation 5.43 in Accretion power in astrophysics
     (CONSTANTS OMMITED)
-    '''
+    """
     T_eff = np.empty((len(R),tMax))
     for i in range (len(R)):
         for t in range(tMax):
@@ -200,7 +281,7 @@ def T_eff (R):
 
 
 def B_nu(R, nu):
-    '''
+    """
     Calculates the blackbody spectral irradiance based off eq 5.44.2
     Accretion power in astrophysics (CONSTANTS OMMITED)
     
@@ -209,27 +290,27 @@ def B_nu(R, nu):
         nu = frequency   
     
     Note: B_nu is large at small radii however it is a measure of density.
-    '''
+    """
     B_nu = 1 * nu**3 / ((np.e**(1 * nu /T_eff(R)))-1)
     return B_nu
 
 
 def calc_area(R):
-    '''
+    """
     Calculates the area of annuli from list of radii
     Returns len(R) - 1 list of areas
-    '''
+    """
     A = np.array([np.pi * (R[i+1] ** 2. - R[i] ** 2.) for i in range (len(R) - 1)])
     return A
 
 def calc_flux(R, nu):
-    '''
+    """
     Calculates the flux via blackbody spectrum at all radius and all time
     returns rxt array
     inputs:
         R = list of Radii
         nu = frequency
-    '''
+    """
     A = calc_area(R)
     B = B_nu(R, nu)
     Flux = np.empty((len(R)-1,tMax))
@@ -239,20 +320,20 @@ def calc_flux(R, nu):
     return Flux
     
 def average_arr(arr):
-    '''
+    """
     Calcutes the average value between each item in an array arr
     return length len(arr) - 1 array of new values
-    '''
+    """
     arr1 = np.empty(len(arr)-1)
     for i in range(len(arr)-1):
         arr1[i] = (arr[i] + arr[i+1]) / 2.
     return arr1
 
 def shift_M_dot(M_dot):
-    '''
+    """
     Calculates the shift in the mass accretion rate by the propagation time from
     the outermost annulus to the present annulus
-    '''
+    """
     ViscTime = viscous_timescale(R)
     ViscTimeMax = int(max(ViscTime))
     
@@ -282,14 +363,14 @@ def shift_M_dot(M_dot):
     return M_shifted
 
 def filter_factor(R, rf, gamma):
-    '''
+    """
     Calculates the Filter factor for Normalisation of the PSD
     See appendix arevalo, Uttley
     Inputs:
         R = as array
         Gamma = as int
         rf = final radius for filter factor
-    '''
+    """
     em = emissivity(R,gamma)
     area = calc_area(R)
     em_avg = average_arr(em_soft)
@@ -304,52 +385,46 @@ def filter_factor(R, rf, gamma):
     return filter_factor
 
 def calc_area_full(R):
-    '''
+    """
     Calculates the area of annuli from list of radii
     Returns len(R) - 1 list of areas
-    '''
+    """
     A = np.array([np.pi * (R[i+1] ** 2. - R[i] ** 2.) for i in range (len(R)-1)])
     A = np.insert(A,0,np.pi*R[0]**2)     
     return A
 
-
-#================================================#
-#====================CONSTANTS===================#
-#================================================#
-
-H_R_= 1.0 # H/R (height of the disc over total radius) (10^-2 was suggested)
-M_0_start = 1.0 #Starting M_0 at outermost radius
-
-#Disk constants
-'''Arvelo and Uttley fix the first innermost radius at 6 Units
-The number of annuli considered is also N = 1000
-'''
-N = 30      #Number of Radii
-Rmin = 1.0  #Minimum (starting) Radius
-Rmax = 10.0
-
-Q = 0.5  #Q is defined as the ratio of lorenzian peak freqency to FWHM
-tMax_factor = 10.1   #Number of maximum viscous timescales to calculate to
-
-#==================Variables=====================#
-R = create_disc(N, Rmin, Rmax)
-#alpha = 0.1*np.ones(len(R))
-alpha = calc_alpha(R)           #Caclulates value of alpha at each radius
-
-ViscMax = max(viscous_timescale(R))
-tMax = int(tMax_factor * ViscMax)
-if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
-    tMax = tMax + 1
     
-sinusoid = False    #Creates m_dot as either sinusoids or timmer and koenig  
-          
-m_dot = calc_m_dot(R, tMax, Q, sinusoid)    
-    
-
-#================================================#
-#=======================MAIN=====================#
-#================================================#
 if __name__ == "__main__":
+    #seed = 5
+    seed = int(100*np.random.random())
+    np.random.seed(seed)
+    
+    
+    # Disk constants
+    # Arvelo and Uttley fix the first innermost radius at 6 Units
+    # The number of annuli considered is also N = 1000
+    H_R_= 1.0          # H/R (height of the disc over total radius) (10^-2 was suggested)
+    M_0_start = 1.0    # Starting M_0 at outermost radius
+    N = 30             # Number of Radii
+    Rmin = 1.0         # Minimum (starting) Radius
+    Rmax = 10.0        # Maximum (ending) Radius
+    Q = 0.5            # Q is defined as the ratio of lorenzian peak freqency to FWHM
+    tMax_factor = 10.1 # Number of maximum viscous timescales to calculate to
+    
+    R = create_disc(N, Rmin, Rmax)
+    #alpha = 0.1*np.ones(len(R))
+    alpha = calc_alpha(R)           #Caclulates value of alpha at each radius
+    
+    ViscMax = max(viscous_timescale(R))
+    tMax    = int(tMax_factor * ViscMax)
+    if tMax%2 != 0:       #PSD CALCULATION REQUIRES EVEN NUMBER OF TIMES
+        tMax = tMax + 1
+        
+    sinusoid = False    #Creates m_dot as either sinusoids or timmer and koenig  
+              
+    m_dot = calc_m_dot(R, tMax, Q, sinusoid)    
+    print(m_dot)
+    input()
     time0 = time()
     
     print(f'radii: {len(R)} | tMax: {tMax} | tMax factor: {tMax_factor} | ViscMax: {ViscMax}')
@@ -364,12 +439,13 @@ if __name__ == "__main__":
     print(f'############# CALCULATING M_DOT #############')
           
     ############-Count Rate vs Time-############
-    M=np.empty((tMax,N))
-    T=np.arange(tMax)
+    M = np.empty((tMax, N))
+    T = np.arange(tMax)
     
-    for t in np.arange(0,tMax,1):   
-        #M[t] = M_dot(R, t, M_0_start)
-        M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
+    for t in np.arange(0, tMax, 1):   
+        M[t] = M_dot(R, t, M_0_start)
+
+        # M[t] = dampen(M_dot(R, t, M_0_start), 0.5) #damped
         percents = round(100.0 * t / float(tMax), 4)
         if percents % 10.00==0:
            print(percents, '%', '|Calculating M_dot| t =', t, '/', tMax)
@@ -393,7 +469,7 @@ if __name__ == "__main__":
     
     ############-RMS vs Average Count Rate-############
     
-    a = np.array_split(T, len(T)/(tMax/10))
+    a         = np.array_split(T, len(T)/(tMax/10))
     count_bin = np.array_split(M[0], len(M[0])/(tMax/10))
     
     b_avg = np.empty(len(a))
@@ -409,8 +485,15 @@ if __name__ == "__main__":
     fig2 = plt.figure(2, figsize=(7, 7)) 
     plt.xlabel('Average count rate')
     plt.ylabel('rms') 
-    
-    plt.plot(np.unique(b_avg), np.poly1d(np.polyfit(b_avg, b_rms, 1))(np.unique(b_avg)), color='r')
+
+        
+    x = np.unique(b_avg)
+    print(b_avg)
+    print(b_rms)
+    fit = np.polyfit(x=b_avg, y=b_rms, deg=1)
+
+    y = np.poly1d(fit)(np.unique(b_avg))
+    plt.plot(x, y, color='r')
     
     plt.scatter(b_avg,b_rms, marker='x')
     
@@ -471,17 +554,17 @@ if __name__ == "__main__":
     plt.legend()
     
     
-    '''
+    """
     cor=np.correlate(M_total_soft,M_total_hard, mode='full')
     
     fig6 = plt.figure(6, figsize=(7, 4))
     
     plt.plot(np.arange(0,len(cor),1),cor)
-    '''
+    """
     
     
     
-    '''
+    """
     #########################SUMMING INNER/OUTER####################
     M_shifted_outter = np.sum(M_shifted[15:], axis=0)
     M_shifted_inner = np.sum(M_shifted[:15], axis=0)
@@ -509,12 +592,12 @@ if __name__ == "__main__":
     fig6 = plt.figure(6, figsize=(7, 4))
     
     plt.plot(np.arange(0,len(cor),1),cor)
-    '''
+    """
     
     
     
     
-    '''
+    """
     #########################Not summing INNER/OUTER####################
     M_shifted_inner = M_shifted[0]
     M_shifted_outter = M_shifted[-1]
@@ -542,7 +625,7 @@ if __name__ == "__main__":
     fig6 = plt.figure(6, figsize=(7, 4))
     
     plt.plot(np.arange(0,len(cor),1),cor)
-    '''
+    """
     
     
     #plt.legend()
@@ -578,7 +661,7 @@ if __name__ == "__main__":
     
     
     
-    '''
+    """
     ############# Light Curves From Blackbody #############
     
     fig5 = plt.figure(5, figsize=(7, 4))
@@ -588,14 +671,14 @@ if __name__ == "__main__":
         flux2 = calc_flux(R,i)
         plt.plot(R[:-1],np.transpose(flux2)[0], label=i)
     plt.legend()
-    '''
+    """
     
     
     plt.show()
     time1 = time()
     print('Time taken', time1-time0, '| seed:', seed)
         
-    '''
+    """
     ############ PSD for m_dot ############
     radius = 0
     freq1, PSD1 = PSD_continuous(T,m_dot[radius])
@@ -612,4 +695,4 @@ if __name__ == "__main__":
             plt.axvline(x = i, linewidth = 1.0, color='red', linestyle='--')
         else:
             plt.axvline(x = i, linewidth = 1.0, linestyle='--')
-    '''
+    """
